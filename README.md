@@ -88,8 +88,12 @@ pitch rather than appearing out of nowhere.
 
 ## Loops
 
-Press record and play along to the click. The loop runs for a set number of bars and wraps;
-record again to stack another layer on top, up to four.
+Press record and play along to the click. **A take is exactly one pass long and ends itself** —
+there is no second button to find mid-performance. The ring on the chassis fills red as the take
+runs and completes a full circle at the moment recording stops, and the counter shows the
+seconds left. Press record again before then to end a take early.
+
+Each take becomes a layer, and you can stack four.
 
 Each layer keeps whichever voice was selected when you played it, so you can put **Sub**
 underneath **Glass**. Layers store scale degrees and knob positions rather than notes, so

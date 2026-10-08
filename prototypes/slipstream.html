@@ -697,12 +697,17 @@ labelPads();renderKnob();
 /* ================= loop recorder ================= */
 const LHUES=['#22D3EE','#4C9BFF','#8560F0','#F07BC8'];
 const LP={running:false,rec:false,bpm:96,bars:4,q:false,layers:[],cur:null,
-          origin:0,passN:0,timer:null,raf:null,held:null,max:4};
+          origin:0,passN:0,timer:null,raf:null,held:null,max:4,recStart:0,recFrom:0};
 function beatLen(){return 60/LP.bpm;}
 function loopBeats(){return LP.bars*4;}
 function loopLen(){return loopBeats()*beatLen();}
 function loopPosBeats(){return loopPos()/beatLen();}
-function loopPos(){if(!LP.running||!AC)return 0;const L=loopLen();return ((AC.currentTime-LP.origin)%L+L)%L;}
+function loopPos(){
+  if(!LP.running||!AC)return 0;
+  const L=loopLen(),d=AC.currentTime-LP.origin;
+  if(d<0)return 0;        /* the transport is armed a beat ahead; don't wrap to the end */
+  return ((d%L)+L)%L;
+}
 
 /* one-shot voice for scheduled layer playback — the live pool keeps its glide */
 let sched=[];                      /* notes handed to the audio clock but not yet finished */
@@ -806,6 +811,8 @@ function loopStop(){
 function resync(){if(!LP.running||!AC)return;LP.origin=AC.currentTime;LP.passN=0;}
 function loopTick(){
   if(!LP.running||!AC)return;
+  /* one pass per take; the interval runs even when the tab is not painting */
+  if(LP.rec&&AC.currentTime-LP.recStart>=loopLen()-.004)recToggle();
   const L=loopLen();
   while(LP.origin+LP.passN*L<AC.currentTime+.25){schedulePass(LP.origin+LP.passN*L,L);LP.passN++;}
 }
@@ -834,8 +841,14 @@ function loopFrame(){if(!LP.running)return;drawPh(loopPos()/loopLen());fmtClock(
 function drawPh(f){
   const ph=el('ph'),tr=el('phtrack');
   tr.setAttribute('opacity',LP.running?'1':'0');
-  if(!(f>.002)){ph.setAttribute('d','');return;}
-  ph.setAttribute('d',arcD(200,200,181,0,Math.min(359.8,f*360)));
+  if(LP.rec&&AC){
+    const prog=Math.min(1,(AC.currentTime-LP.recStart)/loopLen());
+    const a0=LP.recFrom*360;
+    ph.setAttribute('d',prog>.002?arcD(200,200,181,a0,a0+Math.min(359.8,prog*360)):'');
+  }else{
+    if(!(f>.002)){ph.setAttribute('d','');return;}
+    ph.setAttribute('d',arcD(200,200,181,0,Math.min(359.8,f*360)));
+  }
   /* never the accent hue — that colour means the knob, not the clock */
   ph.setAttribute('stroke',LP.rec?'#FF4D5E':'#C6CEDE');
   ph.setAttribute('stroke-width','3');
@@ -847,8 +860,13 @@ function fmtClock(){
   if(!LP.running||!AC){main.textContent='\u2014';sub.textContent='stopped';box.dataset.rec='0';return;}
   const L=loopLen(),pos=loopPos(),bl=beatLen();
   const beat=Math.floor(pos/bl),bar=Math.floor(beat/4)+1,bt=(beat%4)+1;
-  main.textContent=(L-pos).toFixed(1)+'s';
-  sub.textContent=(LP.rec?'recording \u00b7 ':'')+'bar '+bar+'/'+LP.bars+' \u00b7 beat '+bt;
+  if(LP.rec){
+    main.textContent=takeLeft().toFixed(1)+'s';
+    sub.textContent='recording \u00b7 stops itself \u00b7 bar '+bar+'/'+LP.bars;
+  }else{
+    main.textContent=(L-pos).toFixed(1)+'s';
+    sub.textContent='bar '+bar+'/'+LP.bars+' \u00b7 beat '+bt;
+  }
   box.dataset.rec=LP.rec?'1':'0';
 }
 function drawTicks(){
@@ -864,15 +882,23 @@ function drawTicks(){
 }
 
 /* ---- record ---- */
+function takeLeft(){
+  if(!LP.rec||!AC)return 0;
+  return Math.max(0,loopLen()-(AC.currentTime-LP.recStart));
+}
 function recToggle(){
   ensureAudio();
   if(LP.rec){
+    recOff();                       /* a chord still held belongs to this take */
     LP.rec=false;
     if(LP.cur&&!LP.cur.events.length)LP.layers=LP.layers.filter(l=>l!==LP.cur);
     LP.cur=null;
   }else{
     if(LP.layers.length>=LP.max)return;
     if(!LP.running)loopStart();
+    const L=loopLen();
+    LP.recStart=Math.max(AC?AC.currentTime:0,LP.origin||0);
+    LP.recFrom=L>0?((((LP.recStart-LP.origin)%L)+L)%L)/L:0;
     LP.cur={sound:S.sound,events:[],muted:false,hue:LHUES[LP.layers.length%LHUES.length],el:null};
     LP.layers.push(LP.cur);LP.rec=true;
   }
@@ -923,8 +949,9 @@ function renderLayers(){
     r.appendChild(m);r.appendChild(x);
     ly.el=r;box.appendChild(r);
   });
-  el('loopempty').innerHTML='Hit <b>record</b> and play along to the click. The loop runs for '
-    +LP.bars+' bars and wraps. Record again to stack another layer on top \u2014 each keeps whichever '
+  el('loopempty').innerHTML='Hit <b>record</b> and play along to the click. A take runs '
+    +LP.bars+' bars and <b>ends itself</b> \u2014 the red ring fills as it goes and the counter shows what '
+    +'is left. Record again to stack another layer on top \u2014 each keeps whichever '
     +'voice was selected when you played it, so you can put <b>Sub</b> under <b>Glass</b>. Layers hold '
     +'scale degrees and beats rather than notes and seconds, so changing the key transposes everything '
     +'and changing the tempo moves it all together.';
