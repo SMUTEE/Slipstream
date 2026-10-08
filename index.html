@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Slipstream</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;500;700&family=JetBrains+Mono:wght@400&display=swap">
+<style>
+:root{--void:#050609;--fg:#E9EEF8;--dim:#79839A;--faint:#434B5E;--hue:#2E9BFF;
+  --line:rgba(130,170,255,.09);color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--void);color:var(--fg);font:300 15px/1.6 "Manrope",system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased;overflow-x:hidden}
+.wrap{max-width:660px;margin:0 auto;padding-inline:20px;padding-block:72px 80px}
+h1{font-weight:200;font-size:clamp(34px,8vw,52px);letter-spacing:-.02em;margin:0}
+h1 b{font-weight:700;color:var(--hue)}
+.sub{color:var(--dim);margin:14px 0 0;max-width:46ch}
+.lab{font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--faint);margin:54px 0 14px}
+a.card{display:block;text-decoration:none;color:inherit;border:1px solid var(--line);
+  border-radius:15px;padding:18px 20px;margin-bottom:10px;transition:border-color .2s,background .2s;
+  background:linear-gradient(170deg,#101624,#0A0E18)}
+a.card:hover{border-color:var(--hue);background:linear-gradient(170deg,#141C2E,#0B1018)}
+a.card .t{font-size:17px;font-weight:500}
+a.card .t em{font-style:normal;font-family:"JetBrains Mono",monospace;font-size:10px;
+  letter-spacing:.12em;color:var(--hue);border:1px solid var(--hue);border-radius:999px;
+  padding:2px 8px;margin-left:9px;vertical-align:2px}
+a.card .d{color:var(--dim);font-size:13.5px;margin-top:5px}
+footer{margin-top:52px;padding-top:20px;border-top:1px solid var(--line);color:var(--faint);font-size:12.5px}
+footer a{color:var(--dim)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Slip<b>stream</b></h1>
+  <p class="sub">A browser chord instrument. Seven scale degrees, a twelve-detent knob, and
+  notes that slide between chords instead of restarting.</p>
+
+  <div class="lab">Play</div>
+  <a class="card" href="prototypes/slipstream.html">
+    <div class="t">Slipstream <em>current</em></div>
+    <div class="d">The knob build. Eight synth voices, true portamento, full keyboard control.</div>
+  </a>
+
+  <div class="lab">Studies</div>
+  <a class="card" href="prototypes/waon-three-ways.html">
+    <div class="t">Waon Three Ways</div>
+    <div class="d">Three Japanese visual directions — Shōwa toy console, festival lanterns, ink seals.</div>
+  </a>
+  <a class="card" href="prototypes/chord-ui-options.html">
+    <div class="t">Seven Degrees</div>
+    <div class="d">Three interaction models, and a fourteen-point UX review of the original spec.</div>
+  </a>
+
+  <footer>No dependencies, no build step. Audio starts on your first tap —
+  browsers require a gesture before a page may make sound.
+  <a href="https://github.com/SMUTEE/Slipstream">Source</a></footer>
+</div>
+</body>
+</html>

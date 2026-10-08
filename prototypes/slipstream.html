@@ -1,0 +1,523 @@
+<title>Slipstream</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;500;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one dark room. A single glowing knob module as hero, degree pads beneath, controls and key map below. */
+:root{
+  --void:#050609; --void-2:#0A0C12;
+  --chassis-1:#1E2638; --chassis-2:#0C1120; --chassis-3:#070A12;
+  --edge:rgba(130,170,255,.13); --edge-2:rgba(130,170,255,.05);
+  --fg:#E9EEF8; --fg-dim:#79839A; --fg-faint:#434B5E;
+  --line:rgba(130,170,255,.09);
+  --hue:#2E9BFF;               /* live accent, rewritten by JS per degree */
+  --ui:"Manrope",system-ui,-apple-system,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--void);color:var(--fg);font-family:var(--ui);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.wrap{max-width:860px;margin:0 auto;padding-inline:20px;padding-block:0 64px}
+h1{margin:0;font-weight:200;letter-spacing:-.02em}
+button{font-family:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--hue);outline-offset:3px;border-radius:6px}
+.lab{font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--fg-faint)}
+
+header{padding-block:40px 8px;text-align:center}
+header h1{font-size:clamp(28px,5.4vw,42px)}
+header h1 b{font-weight:700;color:var(--hue);transition:color .4s}
+header p{color:var(--fg-dim);margin:10px auto 0;max-width:48ch;font-size:14.5px;font-weight:300}
+
+/* ---------- knob module ---------- */
+.stage{position:relative;display:flex;justify-content:center;padding-block:26px 8px}
+.aura{position:absolute;width:min(560px,96vw);aspect-ratio:1;border-radius:50%;
+  background:radial-gradient(circle,var(--hue) 0%,transparent 62%);
+  opacity:.05;filter:blur(42px);transition:opacity .45s ease,background .45s ease;pointer-events:none}
+.stage[data-live="1"] .aura{opacity:.3}
+.module{position:relative;width:min(380px,88vw);aspect-ratio:1;border-radius:29%;
+  background:linear-gradient(152deg,var(--chassis-1) 0%,var(--chassis-2) 54%,var(--chassis-3) 100%);
+  box-shadow:
+    inset 0 1.5px 0 rgba(170,200,255,.16),
+    inset 0 0 0 1px var(--edge-2),
+    inset 0 -2px 26px rgba(0,0,0,.6),
+    0 34px 70px -24px rgba(0,0,0,.95),
+    0 0 0 1px rgba(0,0,0,.6);
+  display:grid;place-items:center;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
+.module::after{content:"";position:absolute;inset:0;border-radius:29%;pointer-events:none;
+  background-image:radial-gradient(rgba(255,255,255,.035) .5px,transparent .6px);background-size:3px 3px;mix-blend-mode:overlay}
+.ringsvg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
+.ringsvg .arc{fill:none;stroke-linecap:round;transition:stroke .3s}
+
+.knob{position:relative;width:56%;aspect-ratio:1;border-radius:50%;cursor:grab;
+  background:
+    radial-gradient(118% 100% at 32% 24%, #2A3550 0%, #1A2238 38%, #121A2C 68%, #0D1423 100%);
+  box-shadow:
+    inset 0 2px 1px rgba(180,210,255,.18),
+    inset 0 -14px 26px rgba(0,0,0,.5),
+    0 16px 30px -10px rgba(0,0,0,.85),
+    0 0 0 1px rgba(140,175,255,.08);
+  display:grid;place-items:center}
+.knob:active{cursor:grabbing}
+.knob::before{content:"";position:absolute;inset:-3.5%;border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle,var(--hue) 0%,transparent 68%);
+  opacity:var(--rimop,0);filter:blur(13px);transition:opacity .35s}
+.knobrot{position:absolute;inset:0;display:grid;place-items:start center;transition:transform .18s cubic-bezier(.3,1.4,.5,1)}
+.ind{width:9px;height:9px;border-radius:50%;background:var(--hue);margin-top:9%;
+  box-shadow:0 0 12px 3px var(--hue),0 0 30px 6px color-mix(in srgb,var(--hue) 55%,transparent);transition:background .3s,box-shadow .3s}
+.face{position:relative;text-align:center;pointer-events:none;padding-inline:8px}
+.face .chord{font-size:clamp(28px,7.4vw,40px);font-weight:200;letter-spacing:-.02em;line-height:1.05;
+  text-shadow:0 0 26px color-mix(in srgb,var(--hue) 45%,transparent);transition:text-shadow .3s}
+.face{transition:opacity .4s}
+.face.idle .chord{opacity:.34;text-shadow:none}
+.face.idle .sub{opacity:.45}
+.face .sub{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--fg-dim);margin-top:7px;min-height:14px}
+
+/* ---------- degree pads ---------- */
+.pads{display:grid;grid-template-columns:repeat(7,1fr);gap:9px;margin-top:30px}
+.pad{position:relative;border:0;padding:0;aspect-ratio:4/5;border-radius:17px;cursor:pointer;touch-action:none;
+  background:linear-gradient(170deg,#141A2A,#0A0E18);
+  box-shadow:inset 0 1px 0 rgba(170,200,255,.09),inset 0 0 0 1px rgba(130,170,255,.05),0 10px 20px -12px #000;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  transition:transform .1s,box-shadow .18s;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
+.pad .n{font-size:17px;font-weight:300;color:var(--fg-dim);transition:color .18s,text-shadow .18s}
+.pad .r{font-family:var(--mono);font-size:9.5px;letter-spacing:.07em;color:var(--fg-faint);transition:color .18s}
+.pad::after{content:"";position:absolute;inset:0;border-radius:17px;pointer-events:none;opacity:0;transition:opacity .18s;
+  background:radial-gradient(90% 70% at 50% 108%,var(--c) 0%,transparent 70%)}
+.pad[data-on="1"]{transform:translateY(2px);
+  box-shadow:inset 0 0 0 1px var(--c),inset 0 -16px 30px -14px var(--c),0 0 32px -6px var(--c),0 6px 14px -10px #000}
+.pad[data-on="1"]::after{opacity:.5}
+.pad[data-on="1"] .n{color:#fff;text-shadow:0 0 16px var(--c)}
+.pad[data-on="1"] .r{color:var(--c)}
+
+/* ---------- controls ---------- */
+.rack{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:22px;padding-block:16px;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.seg{display:flex;align-items:center;gap:8px}
+select{background:#0E1320;color:var(--fg);border:1px solid var(--line);border-radius:9px;padding:7px 9px;font-family:var(--mono);font-size:12.5px}
+.tog{background:#0D121F;border:1px solid var(--line);border-radius:999px;padding:7px 15px;font-family:var(--mono);font-size:11px;letter-spacing:.11em;text-transform:uppercase;cursor:pointer;color:var(--fg-dim);transition:all .18s}
+.tog[aria-pressed="true"]{color:var(--void);background:var(--hue);border-color:var(--hue);box-shadow:0 0 22px -4px var(--hue)}
+input[type=range]{accent-color:var(--hue);width:110px;vertical-align:middle}
+.glideval{font-family:var(--mono);font-size:11.5px;color:var(--fg-dim);min-width:52px;font-variant-numeric:tabular-nums}
+.apill{margin-left:auto;display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:10.5px;color:var(--fg-faint);letter-spacing:.06em}
+.apill .d{width:6px;height:6px;border-radius:50%;background:var(--fg-faint)}
+.apill.live .d{background:var(--hue);box-shadow:0 0 9px 2px var(--hue)}
+
+/* ---------- key map ---------- */
+.keymap{margin-top:34px}
+.keymap h2{font-weight:300;font-size:19px;margin:0 0 4px}
+.keymap .intro{color:var(--fg-dim);font-size:14px;font-weight:300;max-width:62ch;margin:0 0 20px}
+.kmgrid{display:flex;gap:26px;flex-wrap:wrap;align-items:flex-start}
+.cluster{display:grid;grid-template-columns:repeat(3,64px);gap:7px;flex:0 0 auto}
+.cap{aspect-ratio:1;border-radius:11px;background:linear-gradient(170deg,#141A2A,#0A0E18);
+  box-shadow:inset 0 1px 0 rgba(170,200,255,.08),inset 0 0 0 1px rgba(130,170,255,.05);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;transition:box-shadow .15s}
+.cap b{font-family:var(--mono);font-size:13px;font-weight:500;color:var(--fg)}
+.cap span{font-family:var(--mono);font-size:8.5px;letter-spacing:.04em;color:var(--fg-faint);text-align:center;line-height:1.2}
+.cap[data-hot="1"]{box-shadow:inset 0 0 0 1px var(--hue),0 0 20px -5px var(--hue)}
+.cap[data-hot="1"] b{color:var(--hue)}
+.kmnotes{flex:1 1 280px;min-width:0;display:flex;flex-direction:column;gap:11px}
+.kmrow{display:flex;gap:12px;align-items:baseline}
+.kmrow kbd{font-family:var(--mono);font-size:11px;background:#0E1320;border:1px solid var(--line);border-radius:6px;padding:3px 7px;white-space:nowrap;flex:0 0 auto;color:var(--fg)}
+.kmrow p{margin:0;font-size:13.5px;color:var(--fg-dim);font-weight:300}
+.kmrow p b{color:var(--fg);font-weight:500}
+.stepnote{margin-top:16px;padding:13px 15px;border-radius:12px;background:rgba(46,155,255,.05);border:1px solid rgba(46,155,255,.14);font-size:13.5px;color:#AFC0DC;font-weight:300}
+.stepnote b{color:var(--hue);font-weight:500}
+
+.foot{margin-top:38px;color:var(--fg-faint);font-size:12.5px;font-weight:300;display:flex;gap:7px;flex-wrap:wrap}
+.foot span{font-family:var(--mono);font-size:10.5px;letter-spacing:.07em;border:1px solid var(--line);border-radius:999px;padding:3px 10px}
+
+@media (max-width:640px){
+  .pads{grid-template-columns:repeat(4,1fr)}
+  .cluster{grid-template-columns:repeat(3,56px)}
+  .rack{gap:9px}
+  input[type=range]{width:88px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+<header>
+  <h1>Slip<b>stream</b></h1>
+  <p>Hold a chord, change the key, and the notes slide rather than restart. Twelve detents of harmonic colour on one knob.</p>
+</header>
+
+<div class="stage" id="stage">
+  <div class="aura"></div>
+  <div class="module" id="module">
+    <svg class="ringsvg" viewBox="0 0 400 400" aria-hidden="true">
+      <g id="dots"></g>
+      <path class="arc" id="arc" d=""></path>
+    </svg>
+    <div class="knob" id="knob">
+      <div class="knobrot" id="knobrot"><div class="ind"></div></div>
+      <div class="face idle" id="face">
+        <div class="chord" id="chord">—</div>
+        <div class="sub" id="sub">press 1–7</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="pads" id="pads"></div>
+
+<div class="rack">
+  <div class="seg"><span class="lab">Key</span><select id="keysel"></select></div>
+  <div class="seg"><span class="lab">Scale</span><select id="scalesel"></select></div>
+  <div class="seg"><span class="lab">Voice</span><select id="sndsel"></select></div>
+  <button class="tog" id="slidebtn" aria-pressed="true">Slide</button>
+  <div class="seg"><input type="range" id="glide" min="20" max="600" step="10" value="160" aria-label="Glide time"><span class="glideval" id="glideval">160 ms</span></div>
+  <button class="tog" id="holdbtn" aria-pressed="false">Hold</button>
+  <div class="apill" id="apill"><span class="d"></span><span id="atext">silent — tap to start</span></div>
+</div>
+
+<section class="keymap">
+  <div class="lab">Knob on a keyboard</div>
+  <h2>Twelve angles, no diagonals to guess at</h2>
+  <p class="intro">Arrow keys only reach four of the knob's twelve detents. The fix is a nine-key cluster that sits under your left hand in the same spatial arrangement as the knob itself, plus two step keys that reach the four positions between the compass points.</p>
+  <div class="kmgrid">
+    <div class="cluster" id="cluster"></div>
+    <div class="kmnotes">
+      <div class="kmrow"><kbd>1 – 7</kbd><p>Play a scale degree. Right hand on the number row, left hand on the cluster.</p></div>
+      <div class="kmrow"><kbd>Q W E / A S D / Z X C</kbd><p>The eight compass detents. <b>S</b> returns the knob to the plain triad.</p></div>
+      <div class="kmrow"><kbd>[ &nbsp;]</kbd><p>Step the knob one detent counter-clockwise or clockwise — this is how you reach all twelve.</p></div>
+      <div class="kmrow"><kbd>↑ → ↓ ←</kbd><p>The four cardinals. Hold two at once for a diagonal, the way a real stick works.</p></div>
+      <div class="kmrow"><kbd>Space</kbd><p>Latch the chord so your hands are free to change key and hear it slide.</p></div>
+      <div class="kmrow"><kbd>G</kbd><p>Toggle slide. <kbd style="padding:1px 5px">Esc</kbd> recentres the knob.</p></div>
+    </div>
+  </div>
+  <div class="stepnote">Four detents — <b>6th, 9th, 7sus4, dim</b> — sit between the compass points and are reachable only by stepping or dragging. That is deliberate: the eight that earn a dedicated key are the eight you reach for while playing, and the ordering puts each step-only detent next to its nearest relative, so stepping one click from a key you know always lands somewhere musical.</div>
+</section>
+
+<div class="foot">
+  <span>12 keys</span><span>4 scales</span><span>12 detents</span><span>8 voices</span><span>true portamento</span><span>5-voice pool</span>
+</div>
+</div>
+
+<script>
+/* ================= music engine ================= */
+const NOTES=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
+const SCALES={major:{label:'Major',steps:[0,2,4,5,7,9,11]},minor:{label:'Natural Minor',steps:[0,2,3,5,7,8,10]},
+  dorian:{label:'Dorian',steps:[0,2,3,5,7,9,10]},mixolydian:{label:'Mixolydian',steps:[0,2,4,5,7,9,10]}};
+const ROMAN=['I','II','III','IV','V','VI','VII'];
+const HUES=['#22D3EE','#38BDF8','#4C9BFF','#5B82FF','#6D6CFA','#8560F0','#9C5BE8'];
+const BASEHUE='#2E9BFF';
+
+/* 12 detents clockwise from the top. Four have no dedicated key — they sit between the
+   compass points, each next to its nearest harmonic relative. */
+const DETENTS=[
+ {id:'base',  name:'triad', key:'W'},{id:'add9',  name:'add9',   key:'E'},
+ {id:'six',   name:'6th',   key:null},{id:'add7', name:'7th',    key:'D'},
+ {id:'dom7',  name:'dom7',  key:'C'},{id:'nine',  name:'9th',    key:null},
+ {id:'sus4',  name:'sus4',  key:'X'},{id:'sus2',  name:'sus2',   key:'Z'},
+ {id:'s7sus4',name:'7sus4', key:null},{id:'flip3',name:'maj/min',key:'A'},
+ {id:'aug',   name:'aug',   key:'Q'},{id:'dim',   name:'dim',    key:null}];
+const COMPASS=[0,1,3,4,6,7,9,10];   /* N NE E SE S SW W NW -> detent */
+
+function scaleTone(st,i){const o=Math.floor(i/7);return st[((i%7)+7)%7]+12*o;}
+function buildChord(keyPc,scaleId,deg,tid){
+  const st=SCALES[scaleId].steps;
+  const t=[0,2,4].map(i=>keyPc+scaleTone(st,deg+i));
+  let root=t[0];let iv=t.map(n=>n-root);
+  const third=iv[1],fifth=iv[2];
+  let sev=(keyPc+scaleTone(st,deg+6))-root;sev=((sev%12)+12)%12;if(sev<9)sev+=12;
+  switch(tid){
+    case 'flip3': iv=fifth===6?[0,3,7]:fifth===8?[0,4,7]:[0,third===3?4:3,7];break;
+    case 'add7':  iv=[0,third,fifth,sev];break;
+    case 'nine':  iv=[0,third,fifth,sev,14];break;
+    case 'add9':  iv=[0,third,fifth,14];break;
+    case 'six':   iv=[0,third,fifth,9];break;
+    case 'dom7':  iv=[0,4,7,10];break;
+    case 's7sus4':iv=[0,5,7,10];break;
+    case 'sus4':  iv=[0,5,7];break;
+    case 'sus2':  iv=[0,2,7];break;
+    case 'aug':   iv=[0,4,8];break;
+    case 'dim':   iv=[0,3,6];break;
+  }
+  root=((root%12)+12)%12;
+  return {root,iv};
+}
+const QNAME={'0,4,7':'','0,3,7':'m','0,3,6':'dim','0,4,8':'aug','0,5,7':'sus4','0,2,7':'sus2','0,5,7,10':'7sus4',
+ '0,4,7,11':'maj7','0,3,7,11':'m(maj7)','0,3,7,10':'m7','0,3,6,10':'m7♭5','0,4,7,10':'7','0,3,6,9':'dim7',
+ '0,4,7,14':'add9','0,3,7,14':'m add9','0,3,6,14':'dim add9','0,4,8,14':'aug add9',
+ '0,4,7,9':'6','0,3,7,9':'m6','0,4,8,9':'aug6',
+ '0,4,7,11,14':'maj9','0,3,7,11,14':'m(maj9)','0,3,7,10,14':'m9','0,3,6,10,14':'m9♭5','0,4,7,10,14':'9',
+ '0,3,6,9,14':'dim9','0,4,8,10,14':'9♯5','0,4,8,11,14':'maj9♯5'};
+function chordName(c){const q=QNAME[c.iv.join(',')];return NOTES[c.root]+(q===undefined?'?':q);}
+function chordMidi(c){return c.iv.map(i=>48+c.root+i);}
+function qualityOf(k,sc,d){const c=buildChord(k,sc,d,'base');
+  if(c.iv[1]===3&&c.iv[2]===6)return 'dim';if(c.iv[1]===4&&c.iv[2]===8)return 'aug';return c.iv[1]===3?'min':'maj';}
+function degreeRoman(k,sc,d){const q=qualityOf(k,sc,d);let r=ROMAN[d];
+  if(q==='min'||q==='dim')r=r.toLowerCase();if(q==='dim')r+='°';else if(q==='aug')r+='+';return r;}
+
+/* ================= synth: fixed voice pool, real portamento ================= */
+const SOUNDS={
+ glass :{name:'Glass', t:['sine','sine','sine'],            p:[[1,1],[1,0],[1,0]],       det:[0,0,0], fm:{ratio:2,idx:2.4,dec:.30},  cut:5200,ce:.55,q:.4, a:.004,d:.9, s:.22,r:.70,lvl:.26,wet:.30,oct:0},
+ air   :{name:'Air',   t:['sawtooth','sawtooth','sine'],    p:[[1,.42],[1,.42],[2,.12]], det:[-9,9,0],fm:null,                       cut:1250,ce:1.5,q:.8, a:.45, d:1.8,s:.90,r:1.9,lvl:.20,wet:.60,oct:0},
+ bell  :{name:'Bell',  t:['sine','sine','sine'],            p:[[1,1],[1,0],[1,0]],       det:[0,0,0], fm:{ratio:3.51,idx:5.2,dec:.55},cut:7000,ce:.70,q:.3, a:.002,d:1.7,s:.07,r:1.7,lvl:.24,wet:.50,oct:0},
+ nylon :{name:'Nylon', t:['triangle','sawtooth','sine'],    p:[[1,.7],[1,.3],[1,0]],     det:[0,7,0], fm:null,                       cut:2700,ce:.32,q:1.6,a:.003,d:.45,s:.07,r:.50,lvl:.28,wet:.25,oct:0},
+ organ :{name:'Organ', t:['sine','sine','sine'],            p:[[1,.5],[2,.26],[3,.16]],  det:[0,0,0], fm:null,                       cut:4200,ce:.12,q:.5, a:.020,d:.2, s:.95,r:.18,lvl:.26,wet:.20,oct:0},
+ choir :{name:'Choir', t:['sawtooth','sawtooth','triangle'],p:[[1,.4],[1,.34],[2,.10]],  det:[-6,6,0],fm:null,                       cut:1050,ce:1.0,q:3.4,a:.30, d:1.2,s:.85,r:1.2,lvl:.22,wet:.55,oct:0},
+ mallet:{name:'Mallet',t:['sine','sine','sine'],            p:[[1,1],[1,0],[1,0]],       det:[0,0,0], fm:{ratio:4,idx:3.4,dec:.10},  cut:6000,ce:.22,q:.4, a:.002,d:.5, s:.02,r:.50,lvl:.28,wet:.35,oct:0},
+ sub   :{name:'Sub',   t:['sine','sawtooth','sine'],        p:[[1,.8],[1,.22],[1,0]],    det:[0,4,0], fm:null,                       cut:620, ce:.38,q:.9, a:.012,d:.6, s:.50,r:.42,lvl:.34,wet:.08,oct:-12}};
+const POOL=5;
+let AC=null,dry=null,wet=null,voices=[];
+function mtof(m){return 440*Math.pow(2,(m-69)/12);}
+function ensureAudio(){
+  if(AC){if(AC.state!=='running')AC.resume();return;}
+  const Ctx=window.AudioContext||window.webkitAudioContext;if(!Ctx)return;
+  AC=new Ctx({latencyHint:'interactive'});
+  const comp=AC.createDynamicsCompressor();comp.threshold.value=-15;comp.ratio.value=3.2;comp.connect(AC.destination);
+  const master=AC.createGain();master.gain.value=.9;master.connect(comp);
+  dry=AC.createGain();dry.connect(master);
+  wet=AC.createGain();
+  const dl=AC.createDelay(1);dl.delayTime.value=.3;
+  const fb=AC.createGain();fb.gain.value=.34;
+  const lp=AC.createBiquadFilter();lp.type='lowpass';lp.frequency.value=2200;
+  const sl=AC.createGain();sl.gain.value=.34;
+  wet.connect(dl);dl.connect(lp);lp.connect(fb);fb.connect(dl);lp.connect(sl);sl.connect(master);
+  for(let i=0;i<POOL;i++)voices.push(buildVoice());
+  const el=document.getElementById('apill');el.classList.add('live');
+  document.getElementById('atext').textContent=POOL+' voices · '+Math.round((AC.baseLatency||.003)*1000)+' ms';
+}
+function buildVoice(){
+  const o1=AC.createOscillator(),o2=AC.createOscillator(),o3=AC.createOscillator(),mo=AC.createOscillator();
+  const g1=AC.createGain(),g2=AC.createGain(),g3=AC.createGain(),mg=AC.createGain();
+  const flt=AC.createBiquadFilter();flt.type='lowpass';flt.frequency.value=2000;
+  const amp=AC.createGain(),send=AC.createGain();
+  g1.gain.value=0;g2.gain.value=0;g3.gain.value=0;mg.gain.value=0;amp.gain.value=.0001;send.gain.value=0;
+  o1.connect(g1);o2.connect(g2);o3.connect(g3);
+  g1.connect(flt);g2.connect(flt);g3.connect(flt);
+  flt.connect(amp);amp.connect(dry);amp.connect(send);send.connect(wet);
+  mo.connect(mg);mg.connect(o1.frequency);
+  [o1,o2,o3,mo].forEach(o=>{o.frequency.value=220;o.start();});
+  return {o1,o2,o3,mo,g1,g2,g3,mg,flt,amp,send,on:false,f:220};
+}
+function setTimbre(v,T){
+  v.o1.type=T.t[0];v.o2.type=T.t[1];v.o3.type=T.t[2];
+  v.o1.detune.value=T.det[0];v.o2.detune.value=T.det[1];v.o3.detune.value=T.det[2];
+  v.g1.gain.value=T.p[0][1];v.g2.gain.value=T.p[1][1];v.g3.gain.value=T.p[2][1];
+  v.send.gain.value=T.wet;v.flt.Q.value=T.q;
+}
+function glideParam(p,target,t,gl){
+  p.cancelScheduledValues(t);p.setValueAtTime(Math.max(p.value,1),t);
+  if(gl>0)p.exponentialRampToValueAtTime(Math.max(target,1),t+gl);else p.setValueAtTime(Math.max(target,1),t);
+}
+function setPitch(v,f,T,gl){
+  const t=AC.currentTime;v.f=f;
+  glideParam(v.o1.frequency,f*T.p[0][0],t,gl);
+  glideParam(v.o2.frequency,f*T.p[1][0],t,gl);
+  glideParam(v.o3.frequency,f*T.p[2][0],t,gl);
+  if(T.fm){glideParam(v.mo.frequency,f*T.fm.ratio,t,gl);
+    if(gl>0){v.mg.gain.cancelScheduledValues(t);v.mg.gain.setValueAtTime(v.mg.gain.value,t);
+      v.mg.gain.linearRampToValueAtTime(f*T.fm.idx*.14,t+gl);}}
+}
+function trigger(v,T){
+  const t=AC.currentTime;
+  v.amp.gain.cancelScheduledValues(t);
+  v.amp.gain.setValueAtTime(Math.max(v.amp.gain.value,.0001),t);
+  v.amp.gain.linearRampToValueAtTime(T.lvl,t+T.a);
+  v.amp.gain.setTargetAtTime(T.lvl*T.s,t+T.a,Math.max(T.d/3,.02));
+  v.flt.frequency.cancelScheduledValues(t);
+  v.flt.frequency.setValueAtTime(Math.min(16000,T.cut*2.6),t);
+  v.flt.frequency.exponentialRampToValueAtTime(T.cut,t+T.ce);
+  if(T.fm){const idx=v.f*T.fm.idx;
+    v.mg.gain.cancelScheduledValues(t);v.mg.gain.setValueAtTime(idx,t);
+    v.mg.gain.linearRampToValueAtTime(idx*.12,t+T.fm.dec);}
+}
+function releaseV(v,T){
+  const t=AC.currentTime;
+  v.amp.gain.cancelScheduledValues(t);
+  v.amp.gain.setValueAtTime(Math.max(v.amp.gain.value,.0001),t);
+  v.amp.gain.exponentialRampToValueAtTime(.0001,t+T.r);
+}
+function applyChord(midis){
+  if(!AC)return;
+  const T=SOUNDS[S.sound],gl=S.slide?S.glide/1000:0;
+  const n=Math.min(midis.length,POOL);
+  const anyOn=voices.some(v=>v.on);
+  for(let i=0;i<POOL;i++){
+    const v=voices[i];
+    if(i<n){
+      const f=mtof(midis[i]+T.oct);
+      if(v.on&&gl>0){setPitch(v,f,T,gl);}
+      else{
+        setTimbre(v,T);
+        if(gl>0&&anyOn){ /* a voice joining a sliding chord enters from its nearest neighbour */
+          let near=f,best=1e9;
+          voices.forEach(o=>{if(o.on){const dd=Math.abs(o.f-f);if(dd<best){best=dd;near=o.f;}}});
+          setPitch(v,near,T,0);trigger(v,T);setPitch(v,f,T,gl);
+        } else {setPitch(v,f,T,0);trigger(v,T);}
+        v.on=true;
+      }
+    } else if(v.on){releaseV(v,T);v.on=false;}
+  }
+}
+function releaseAll(){if(!AC)return;const T=SOUNDS[S.sound];voices.forEach(v=>{if(v.on){releaseV(v,T);v.on=false;}});}
+</script>
+<script>
+/* ================= state + UI ================= */
+const S={key:0,scale:'major',sound:'glass',detent:0,deg:null,slide:true,glide:160,hold:false};
+const el=id=>document.getElementById(id);
+const stage=el('stage'),module_=el('module'),knob=el('knob'),knobrot=el('knobrot'),
+      arcEl=el('arc'),dotsG=el('dots'),chordEl=el('chord'),subEl=el('sub'),padsEl=el('pads');
+
+/* ---- selects ---- */
+NOTES.forEach((n,i)=>el('keysel').add(new Option(n,i)));
+Object.keys(SCALES).forEach(k=>el('scalesel').add(new Option(SCALES[k].label,k)));
+Object.keys(SOUNDS).forEach(k=>el('sndsel').add(new Option(SOUNDS[k].name,k)));
+el('keysel').value=0;el('scalesel').value='major';el('sndsel').value='glass';
+el('keysel').onchange=()=>{S.key=+el('keysel').value;labelPads();reflow();};
+el('scalesel').onchange=()=>{S.scale=el('scalesel').value;labelPads();reflow();};
+el('sndsel').onchange=()=>{S.sound=el('sndsel').value;if(sounding())retrigger();};
+el('slidebtn').onclick=e=>{S.slide=!S.slide;e.currentTarget.setAttribute('aria-pressed',S.slide);};
+el('glide').oninput=e=>{S.glide=+e.target.value;el('glideval').textContent=S.glide+' ms';};
+el('holdbtn').onclick=e=>{S.hold=!S.hold;e.currentTarget.setAttribute('aria-pressed',S.hold);
+  if(!S.hold&&S.deg===null)stopAll();};
+document.addEventListener('pointerdown',ensureAudio,{once:true,capture:true});
+
+/* ---- dot ring ---- */
+const NDOTS=48,RD=158;
+for(let i=0;i<NDOTS;i++){
+  const a=(i/NDOTS*360-90)*Math.PI/180;
+  const c=document.createElementNS('http://www.w3.org/2000/svg','circle');
+  c.setAttribute('cx',(200+RD*Math.cos(a)).toFixed(2));
+  c.setAttribute('cy',(200+RD*Math.sin(a)).toFixed(2));
+  c.setAttribute('r',2.1);c.setAttribute('fill','#0C1019');
+  dotsG.appendChild(c);
+}
+function arcD(cx,cy,r,a0,a1){
+  const P=a=>{const t=(a-90)*Math.PI/180;return [(cx+r*Math.cos(t)).toFixed(2),(cy+r*Math.sin(t)).toFixed(2)];};
+  const s=P(a0),e=P(a1),lg=(a1-a0)>180?1:0;
+  return 'M'+s+' A'+r+','+r+' 0 '+lg+' 1 '+e;
+}
+function hue(){return S.deg===null?BASEHUE:HUES[S.deg];}
+function renderKnob(){
+  const h=hue(),ang=S.detent*30,on=sounding();
+  document.documentElement.style.setProperty('--hue',h);
+  knobrot.style.transform='rotate('+ang+'deg)';
+  knob.style.setProperty('--rimop',on?.55:0);
+  stage.dataset.live=on?'1':'0';
+  const lit=Math.round(S.detent/12*NDOTS);
+  for(let i=0;i<NDOTS;i++){
+    const c=dotsG.children[i];
+    if(i<lit){const t=lit>1?i/(lit-1):1;
+      c.setAttribute('fill',h);c.setAttribute('opacity',(.16+.84*t).toFixed(3));c.setAttribute('r',(2.1+1.4*t).toFixed(2));}
+    else{c.setAttribute('fill','#0C1019');c.setAttribute('opacity','1');c.setAttribute('r','2.1');}
+  }
+  if(ang>0){arcEl.setAttribute('d',arcD(200,200,136,0,ang));arcEl.setAttribute('stroke',h);
+    arcEl.setAttribute('stroke-width','7');
+    arcEl.style.filter='drop-shadow(0 0 9px '+h+') drop-shadow(0 0 24px '+h+')';}
+  else arcEl.setAttribute('d','');
+  [...el('cluster').children].forEach(c=>c.dataset.hot=(+c.dataset.det===S.detent)?'1':'0');
+}
+function sounding(){return AC?voices.some(v=>v.on):false;}
+
+/* ---- pads ---- */
+for(let d=0;d<7;d++){
+  const b=document.createElement('button');b.className='pad';b.dataset.d=d;b.type='button';
+  b.style.setProperty('--c',HUES[d]);
+  b.innerHTML='<span class="n">'+(d+1)+'</span><span class="r"></span>';
+  padsEl.appendChild(b);
+}
+function labelPads(){for(let d=0;d<7;d++)padsEl.children[d].querySelector('.r').textContent=degreeRoman(S.key,S.scale,d);}
+function play(d){
+  ensureAudio();S.deg=d;el('face').classList.remove('idle');
+  padsEl.querySelectorAll('.pad').forEach(p=>p.dataset.on=(+p.dataset.d===d)?'1':'0');
+  reflow();
+}
+function reflow(){
+  if(S.deg===null){renderKnob();return;}
+  const c=buildChord(S.key,S.scale,S.deg,DETENTS[S.detent].id);
+  chordEl.textContent=chordName(c);
+  subEl.textContent=degreeRoman(S.key,S.scale,S.deg)+' · '+DETENTS[S.detent].name;
+  applyChord(chordMidi(c));
+  renderKnob();
+}
+function retrigger(){if(S.deg!==null){const c=buildChord(S.key,S.scale,S.deg,DETENTS[S.detent].id);
+  if(AC)voices.forEach(v=>v.on=false);applyChord(chordMidi(c));}}
+function stopAll(){
+  releaseAll();S.deg=null;
+  padsEl.querySelectorAll('.pad').forEach(p=>p.dataset.on='0');
+  chordEl.textContent='—';subEl.textContent='press 1–7';renderKnob();
+}
+function letGo(){ if(S.hold)return; stopAll(); }
+
+let padG=null;
+padsEl.addEventListener('pointerdown',e=>{
+  const p=e.target.closest('.pad');if(!p)return;
+  padG={x:e.clientX,y:e.clientY};
+  try{p.setPointerCapture(e.pointerId);}catch(err){}
+  play(+p.dataset.d);e.preventDefault();
+});
+padsEl.addEventListener('pointermove',e=>{
+  if(!padG)return;
+  const dx=e.clientX-padG.x,dy=e.clientY-padG.y,r=Math.hypot(dx,dy);
+  let det=0;
+  if(r>=24){let a=Math.atan2(dx,-dy)*180/Math.PI;if(a<0)a+=360;det=COMPASS[Math.round(a/45)%8];}
+  if(det!==S.detent){S.detent=det;reflow();}
+});
+const padUp=()=>{if(!padG)return;padG=null;letGo();};
+padsEl.addEventListener('pointerup',padUp);padsEl.addEventListener('pointercancel',padUp);
+
+/* ---- knob drag ---- */
+let kd=null;
+function angleAt(e){const b=knob.getBoundingClientRect();
+  let a=Math.atan2(e.clientX-(b.left+b.width/2),-(e.clientY-(b.top+b.height/2)))*180/Math.PI;
+  return a<0?a+360:a;}
+knob.addEventListener('pointerdown',e=>{ensureAudio();kd={prev:angleAt(e),acc:S.detent*30};
+  try{knob.setPointerCapture(e.pointerId);}catch(err){}e.preventDefault();});
+knob.addEventListener('pointermove',e=>{
+  if(!kd)return;
+  const a=angleAt(e);let d=a-kd.prev;if(d>180)d-=360;if(d<-180)d+=360;
+  kd.acc+=d;kd.prev=a;
+  const det=((Math.round(kd.acc/30)%12)+12)%12;
+  if(det!==S.detent){S.detent=det;reflow();}
+});
+const knobUp=()=>{kd=null;};
+knob.addEventListener('pointerup',knobUp);knob.addEventListener('pointercancel',knobUp);
+
+/* ---- key cluster UI ---- */
+const CLUSTER=[['Q',10],['W',0],['E',1],['A',9],['S',0],['D',3],['Z',7],['X',6],['C',4]];
+CLUSTER.forEach(([k,det],i)=>{
+  const c=document.createElement('div');c.className='cap';c.dataset.det=det;
+  c.innerHTML='<b>'+k+'</b><span>'+(i===4?'reset':DETENTS[det].name)+'</span>';
+  el('cluster').appendChild(c);
+});
+
+/* ---- keyboard ---- */
+const KEYDET={q:10,w:0,e:1,a:9,s:0,d:3,z:7,x:6,c:4};
+const ARR={ArrowUp:0,ArrowRight:90,ArrowDown:180,ArrowLeft:270};
+const arrowsDown=new Set(),numsDown=new Set();
+function setDetent(det){if(det===S.detent)return;S.detent=det;reflow();}
+function arrowDetent(){
+  if(!arrowsDown.size)return null;
+  let x=0,y=0;
+  arrowsDown.forEach(k=>{const a=ARR[k]*Math.PI/180;x+=Math.sin(a);y+=Math.cos(a);});
+  if(!x&&!y)return null;
+  let a=Math.atan2(x,y)*180/Math.PI;if(a<0)a+=360;
+  return COMPASS[Math.round(a/45)%8];
+}
+addEventListener('keydown',ev=>{
+  const tag=ev.target.tagName;if(tag==='SELECT'||tag==='INPUT')return;
+  const k=ev.key,lk=k.toLowerCase();
+  const n=parseInt(k,10);
+  if(n>=1&&n<=7){if(numsDown.has(k))return;numsDown.add(k);ev.preventDefault();play(n-1);return;}
+  if(lk in KEYDET){ev.preventDefault();setDetent(KEYDET[lk]);return;}
+  if(k==='['){ev.preventDefault();setDetent((S.detent+11)%12);return;}
+  if(k===']'){ev.preventDefault();setDetent((S.detent+1)%12);return;}
+  if(k in ARR){ev.preventDefault();arrowsDown.add(k);const d=arrowDetent();if(d!==null)setDetent(d);return;}
+  if(k==='Escape'){setDetent(0);return;}
+  if(k===' '){ev.preventDefault();el('holdbtn').click();return;}
+  if(lk==='g'){ev.preventDefault();el('slidebtn').click();}
+});
+addEventListener('keyup',ev=>{
+  const k=ev.key,n=parseInt(k,10);
+  if(n>=1&&n<=7&&numsDown.delete(k)){if(!numsDown.size)letGo();return;}
+  if(k in ARR)arrowsDown.delete(k);
+});
+
+/* ---- init ---- */
+labelPads();renderKnob();
+</script>

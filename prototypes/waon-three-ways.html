@@ -1,0 +1,510 @@
+<title>Waon Three Ways</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Dela+Gothic+One&family=Shippori+Mincho:wght@500;700&family=Zen+Maru+Gothic:wght@500;700;900&display=swap">
+<style>
+/* Layout: a light product-catalogue wall; each style is a self-contained object card with its own palette. */
+:root{
+  --paper:#EBECEE; --card:#FFFFFF; --ink:#16181B; --ink-2:#5A5F66; --ink-3:#8A9099; --rule:#D5D7DB;
+  /* 玩具 toy console — showa consumer plastic */
+  --d-case:#DAD4C7; --d-case-2:#C7C0B0; --d-case-3:#ABA392; --d-trim:#2E2C28;
+  --d-lcd:#A9BD8D; --d-lcd-2:#90A675; --d-lcd-ink:#1C2815;
+  /* 祭 matsuri — festival night */
+  --e-night:#141B35; --e-night-2:#1D2648; --e-cream:#FFF4E2; --e-red:#E8453C; --e-gold:#F5C542;
+  /* 判 hanko — washi, sumi, two inks */
+  --f-washi:#F1EEE5; --f-washi-2:#E4DFD1; --f-sumi:#191714; --f-shu:#C33329; --f-ai:#27477A; --f-moegi:#6E8540;
+  --dot:"DotGothic16","Courier New",monospace;
+  --dela:"Dela Gothic One","Zen Maru Gothic",sans-serif;
+  --maru:"Zen Maru Gothic",ui-rounded,system-ui,sans-serif;
+  --min:"Shippori Mincho",Georgia,"Times New Roman",serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--paper);color:var(--ink);font-family:var(--maru);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.wrap{max-width:1020px;margin:0 auto;padding-inline:20px;padding-block:0 80px}
+h1,h2,h3{margin:0;text-wrap:balance}
+button{font-family:inherit}
+:focus-visible{outline:2.5px solid var(--ink);outline-offset:2px}
+
+/* two-tier label: small descriptive line above, big name below — the Japanese app convention */
+.tier{display:block}
+.tier .sm{font-family:var(--dot);font-size:11px;letter-spacing:.1em;color:var(--ink-3);display:block}
+.tier .lg{font-weight:900;display:block;line-height:1.15}
+
+.mast{padding-block:44px 26px}
+.mast .jp{font-family:var(--min);font-size:13px;letter-spacing:.5em;color:var(--ink-3)}
+.mast h1{font-family:var(--dela);font-size:clamp(32px,6.4vw,56px);letter-spacing:-.01em;line-height:1.05;margin-block:12px 14px}
+.mast p{color:var(--ink-2);max-width:60ch;margin:0}
+.mast .rule{height:3px;background:var(--ink);margin-top:26px}
+
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:40;background:rgba(235,236,238,.95);backdrop-filter:blur(10px);border-bottom:2px solid var(--ink);margin-inline:-20px;padding:10px 20px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.ctl{display:flex;align-items:center;gap:7px}
+.ctl label{font-family:var(--dot);font-size:11px;letter-spacing:.08em;color:var(--ink-2)}
+select{background:var(--card);color:var(--ink);border:2px solid var(--ink);border-radius:9px;padding:5px 8px;font-family:var(--dot);font-size:13px}
+.apill{margin-left:auto;display:flex;align-items:center;gap:7px;font-family:var(--dot);font-size:11px;color:var(--ink-2);border:2px solid var(--rule);border-radius:999px;padding:4px 11px}
+.apill .dot{width:8px;height:8px;border-radius:50%;background:var(--ink-3)}
+.apill.live{border-color:var(--ink)}
+.apill.live .dot{background:#2F9E5E}
+
+.switch{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-block:26px 0}
+.switch button{background:var(--card);border:2.5px solid var(--ink);border-radius:14px;padding:13px;text-align:left;cursor:pointer;color:var(--ink);box-shadow:4px 4px 0 var(--ink);transition:transform .1s,box-shadow .1s}
+.switch button:hover{transform:translate(-1px,-1px);box-shadow:5px 5px 0 var(--ink)}
+.switch button{position:relative;padding-top:19px}
+.switch button::before{content:"";position:absolute;left:-1px;right:-1px;top:-1px;height:9px;background:var(--rule);border-radius:12px 12px 0 0}
+.switch button[aria-pressed="true"]{transform:translate(3px,3px);box-shadow:1px 1px 0 var(--ink)}
+.switch button[aria-pressed="true"]::before{background:var(--ink)}
+.switch .kj{font-family:var(--min);font-size:24px;font-weight:700;float:right;line-height:1;margin-left:8px}
+.switch .lg{font-size:17px}
+.switch .sub{font-size:12.5px;color:var(--ink-2);display:block;margin-top:5px;line-height:1.4}
+
+.rig{margin-top:18px;border:3px solid var(--ink);border-radius:16px;overflow:hidden;box-shadow:7px 7px 0 var(--ink)}
+.rigcap{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap;margin-top:16px}
+.rigcap p{margin:0;color:var(--ink-2);font-size:14px;max-width:62ch}
+.hint{font-family:var(--dot);font-size:11.5px;color:var(--ink-3);margin-top:10px;letter-spacing:.03em}
+
+/* ================= D · 玩具 TOY CONSOLE ================= */
+#rig-d{background:linear-gradient(170deg,var(--d-case) 0%,var(--d-case-2) 100%);padding:22px 20px 26px}
+.d-top{display:flex;gap:16px;align-items:stretch;flex-wrap:wrap;margin-bottom:20px}
+.lcd{flex:1 1 300px;min-width:0;background:linear-gradient(170deg,var(--d-lcd),var(--d-lcd-2));border:3px solid var(--d-trim);border-radius:7px;padding:13px 15px;position:relative;overflow:hidden;box-shadow:inset 0 3px 10px rgba(0,0,0,.28)}
+.lcd::after{content:"";position:absolute;inset:0;background-image:radial-gradient(var(--d-lcd-ink) .6px,transparent .7px);background-size:3px 3px;opacity:.16;pointer-events:none}
+.lcd .row1{display:flex;justify-content:space-between;font-family:var(--dot);font-size:11px;color:var(--d-lcd-ink);opacity:.72;letter-spacing:.06em}
+.lcd .big{font-family:var(--dot);font-size:clamp(30px,6.4vw,46px);color:var(--d-lcd-ink);line-height:1.1;margin-top:6px;letter-spacing:.02em}
+.lcd .row2{display:flex;justify-content:space-between;font-family:var(--dot);font-size:12px;color:var(--d-lcd-ink);opacity:.85;margin-top:4px;letter-spacing:.05em}
+.compass{flex:0 0 132px;height:132px;position:relative;background:var(--d-case-2);border:3px solid var(--d-trim);border-radius:50%;box-shadow:inset 0 2px 6px rgba(0,0,0,.2)}
+.compass .cl{position:absolute;font-family:var(--min);font-size:12px;font-weight:700;color:var(--d-trim);opacity:.5;transform:translate(-50%,-50%);transition:opacity .1s,color .1s}
+.compass .cl.hot{opacity:1;color:var(--d-lcd-ink);text-shadow:0 0 0 #000}
+.compass .hubdot{position:absolute;left:50%;top:50%;width:13px;height:13px;margin:-6.5px 0 0 -6.5px;border-radius:50%;background:var(--d-trim)}
+.dpads{display:grid;grid-template-columns:repeat(7,1fr);gap:9px}
+.dpad{position:relative;border:0;padding:0;background:transparent;cursor:pointer;touch-action:none;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
+.dcap{aspect-ratio:1/1.25;border-radius:9px;background:var(--c);box-shadow:0 5px 0 var(--cd),0 7px 9px rgba(0,0,0,.25);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;transition:transform .06s,box-shadow .06s}
+.dpad[data-on="1"] .dcap{transform:translateY(4px);box-shadow:0 1px 0 var(--cd),0 2px 4px rgba(0,0,0,.25)}
+.dcap .kj{font-family:var(--min);font-size:21px;font-weight:700;color:#fff;line-height:1;text-shadow:0 1px 1px rgba(0,0,0,.3)}
+.dpad .silk{display:block;font-family:var(--dot);font-size:10px;color:var(--d-trim);opacity:.7;margin-top:7px;letter-spacing:.04em}
+.d-foot{display:flex;justify-content:space-between;align-items:center;margin-top:18px;font-family:var(--dot);font-size:10.5px;color:var(--d-trim);opacity:.62;letter-spacing:.08em}
+
+/* ================= E · 祭 MATSURI ================= */
+#rig-e{background:radial-gradient(120% 80% at 50% 0%,var(--e-night-2) 0%,var(--e-night) 62%);padding:20px 18px 28px;position:relative;overflow:hidden}
+#rig-e::before{content:"";position:absolute;inset:0;background-image:radial-gradient(rgba(255,244,226,.5) .9px,transparent 1px);background-size:34px 34px;opacity:.22;pointer-events:none}
+.e-head{position:relative;text-align:center;margin-bottom:6px}
+.e-head .lab{font-family:var(--min);font-size:12px;letter-spacing:.42em;color:var(--e-gold)}
+.e-chord{font-family:var(--dela);font-size:clamp(34px,8vw,60px);color:var(--e-cream);line-height:1.08;margin-top:2px;transition:transform .12s}
+.e-chord.pop{transform:scale(1.07)}
+.e-sub{font-family:var(--maru);font-weight:700;font-size:13px;color:var(--e-gold);min-height:20px}
+.lanterns{position:relative;display:grid;grid-template-columns:repeat(7,1fr);gap:7px;margin-top:14px;align-items:start}
+.lan{border:0;background:transparent;padding:0;cursor:pointer;touch-action:none;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;display:flex;flex-direction:column;align-items:center;gap:6px;transition:transform .14s cubic-bezier(.3,1.5,.5,1)}
+.lan .cord{width:2px;height:14px;background:rgba(255,244,226,.4)}
+.lan .body{width:100%;max-width:62px;aspect-ratio:1/1.5;border-radius:46% 46% 44% 44%/32% 32% 30% 30%;background:linear-gradient(180deg,var(--c),color-mix(in srgb,var(--c) 70%,#6B1410));display:flex;align-items:center;justify-content:center;position:relative;box-shadow:inset 0 -6px 14px rgba(0,0,0,.3);transition:box-shadow .14s,filter .14s}
+.lan .body::before,.lan .body::after{content:"";position:absolute;left:4%;right:4%;height:3px;background:rgba(255,244,226,.85)}
+.lan .body::before{top:21%}.lan .body::after{bottom:21%}
+.lan .kj{font-family:var(--min);font-size:22px;font-weight:700;color:var(--e-cream);text-shadow:0 1px 3px rgba(0,0,0,.45);z-index:1}
+.lan .rn{font-family:var(--dot);font-size:10px;color:rgba(255,244,226,.5);letter-spacing:.05em}
+.lan[data-on="1"]{transform:translateY(5px) scale(1.06)}
+.lan[data-on="1"] .body{filter:brightness(1.35) saturate(1.1);box-shadow:inset 0 -6px 14px rgba(0,0,0,.18),0 0 34px 6px color-mix(in srgb,var(--c) 70%,transparent)}
+.spark{position:fixed;width:9px;height:9px;border-radius:50%;pointer-events:none;z-index:70}
+@keyframes fly{to{transform:translate(var(--tx),var(--ty)) scale(.2);opacity:0}}
+
+/* ================= F · 判 HANKO ================= */
+#rig-f{background:var(--f-washi);padding:0;display:grid;grid-template-columns:1fr 150px}
+.f-left{padding:24px 22px 26px;border-right:3px solid var(--f-sumi);position:relative;min-width:0;
+  background-image:repeating-linear-gradient(92deg,rgba(25,23,20,.035) 0 1px,transparent 1px 7px)}
+.f-rail{writing-mode:vertical-rl;font-family:var(--min);font-size:13px;letter-spacing:.5em;color:var(--f-sumi);opacity:.5;position:absolute;right:14px;top:22px}
+.f-chord{font-family:var(--min);font-weight:700;font-size:clamp(38px,8.5vw,64px);color:var(--f-sumi);line-height:1.05;letter-spacing:-.01em}
+.f-meta{font-family:var(--min);font-size:14px;color:var(--f-sumi);opacity:.62;margin-top:6px}
+.f-seal{display:inline-flex;align-items:center;justify-content:center;width:62px;height:62px;border:3px solid var(--f-shu);border-radius:7px;color:var(--f-shu);font-family:var(--min);font-weight:700;font-size:15px;line-height:1.05;text-align:center;margin-top:18px;opacity:0;transform:rotate(-6deg) scale(1.3);transition:opacity .16s,transform .16s}
+.f-seal.on{opacity:.92;transform:rotate(-6deg) scale(1)}
+.f-key{position:absolute;left:22px;bottom:20px;font-family:var(--dot);font-size:11px;color:var(--f-sumi);opacity:.45;letter-spacing:.06em}
+.f-col{display:flex;flex-direction:column}
+.seal{flex:1;border:0;border-bottom:3px solid var(--f-sumi);background:var(--f-washi-2);cursor:pointer;touch-action:none;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;display:flex;align-items:center;justify-content:center;gap:9px;padding:9px;position:relative;transition:background .1s}
+.seal:last-child{border-bottom:0}
+.seal .stamp{width:42px;height:42px;border:3px solid var(--c);border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--c);font-family:var(--min);font-size:21px;font-weight:700;transition:transform .07s,background .1s,color .1s}
+.seal .rn{font-family:var(--min);font-size:13px;color:var(--f-sumi);opacity:.55;width:34px}
+.seal[data-on="1"]{background:var(--f-washi)}
+.seal[data-on="1"] .stamp{transform:scale(.9) rotate(-5deg);background:var(--c);color:var(--f-washi)}
+.f-legend{font-family:var(--min);font-size:11px;color:var(--f-sumi);opacity:.6;padding:9px;border-top:3px solid var(--f-sumi);display:flex;flex-direction:column;gap:3px}
+.f-legend i{font-style:normal;display:flex;align-items:center;gap:6px}
+.f-legend b{width:10px;height:10px;border-radius:2px;display:inline-block}
+
+/* shared transform ring */
+.ring{position:fixed;width:230px;height:230px;margin:-115px 0 0 -115px;pointer-events:none;z-index:60;opacity:0;transition:opacity .1s}
+.ring.show{opacity:1}
+.ring .rl{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);white-space:nowrap;padding:4px 9px;border-radius:8px;font-size:12px;line-height:1.1;text-align:center}
+.ring .rl .j{font-family:var(--min);font-weight:700;display:block;font-size:14px}
+.ring .rl .e{font-family:var(--dot);font-size:9px;opacity:.7;display:block}
+.ring[data-k="d"] .rl{background:var(--d-case);color:var(--d-trim);border:2px solid var(--d-trim)}
+.ring[data-k="d"] .rl.hot{background:var(--d-lcd);color:var(--d-lcd-ink)}
+.ring[data-k="e"] .rl{background:rgba(20,27,53,.92);color:var(--e-cream);border:2px solid var(--e-gold)}
+.ring[data-k="e"] .rl.hot{background:var(--e-gold);color:var(--e-night)}
+.ring[data-k="f"] .rl{background:var(--f-washi);color:var(--f-sumi);border:2px solid var(--f-sumi)}
+.ring[data-k="f"] .rl.hot{background:var(--f-shu);color:var(--f-washi);border-color:var(--f-shu)}
+
+@media (max-width:760px){
+  .switch{grid-template-columns:1fr}
+  .dpads{grid-template-columns:repeat(4,1fr)}
+  .lanterns{grid-template-columns:repeat(4,1fr);gap:10px}
+  #rig-f{grid-template-columns:1fr}
+  .f-left{border-right:0;border-bottom:3px solid var(--f-sumi)}
+  .f-col{flex-direction:row;flex-wrap:wrap}
+  .seal{flex:1 1 25%;border-bottom:0;border-right:3px solid var(--f-sumi);flex-direction:column;gap:3px}
+  .seal .rn{width:auto}
+  .f-legend{flex:1 1 100%;border-top:3px solid var(--f-sumi);flex-direction:row;flex-wrap:wrap;gap:10px}
+  .compass{flex:0 0 108px;height:108px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+<header class="mast">
+  <div class="jp">和音・三つの様式</div>
+  <h1>Waon Three Ways</h1>
+  <p>Three Japanese visual directions for the same instrument. Interaction is held constant across all three — press a degree and slide your thumb without lifting — so you are choosing a world, not a control scheme. All of them play.</p>
+  <div class="rule"></div>
+</header>
+
+<div class="bar">
+  <div class="ctl"><label for="keysel">キー</label><select id="keysel"></select></div>
+  <div class="ctl"><label for="scalesel">音階</label><select id="scalesel"></select></div>
+  <div class="ctl"><label for="sndsel">音色</label><select id="sndsel"></select></div>
+  <div class="apill" id="apill"><span class="dot"></span><span id="atext">押すと音が出る</span></div>
+</div>
+
+<div class="switch" id="switch">
+  <button data-opt="d" aria-pressed="true"><span class="kj">玩具</span><span class="tier"><span class="sm">SHOWA ELECTRONICS</span><span class="lg">Toy Console</span></span><span class="sub">Cream plastic, rubber caps, dot-matrix LCD. A thing you'd find in a Shibuya junk shop.</span></button>
+  <button data-opt="e" aria-pressed="false"><span class="kj">祭</span><span class="tier"><span class="sm">FESTIVAL NIGHT</span><span class="lg">Matsuri</span></span><span class="sub">Seven chōchin lanterns that light and swing. Loud, warm, built for sparks.</span></button>
+  <button data-opt="f" aria-pressed="false"><span class="kj">判</span><span class="tier"><span class="sm">INK AND SEAL</span><span class="lg">Hanko</span></span><span class="sub">Washi and sumi in manga panels. Seal colour tells you the chord quality.</span></button>
+</div>
+
+<div class="rig" id="rig-d">
+  <div class="d-top">
+    <div class="lcd">
+      <div class="row1"><span id="d-key">KEY C</span><span id="d-scale">MAJOR</span></div>
+      <div class="big" id="d-chord">----</div>
+      <div class="row2"><span id="d-rn">PRESS 1-7</span><span id="d-snd">KEYS</span></div>
+    </div>
+    <div class="compass" id="d-compass"><div class="hubdot"></div></div>
+  </div>
+  <div class="dpads" id="d-pads"></div>
+  <div class="d-foot"><span>WAON-7 CHORD MACHINE</span><span>七和音</span></div>
+</div>
+
+<div class="rig" id="rig-e" hidden>
+  <div class="e-head">
+    <div class="lab">和 音</div>
+    <div class="e-chord" id="e-chord">—</div>
+    <div class="e-sub" id="e-sub">ちょうちんを押してね</div>
+  </div>
+  <div class="lanterns" id="e-lanterns"></div>
+</div>
+
+<div class="rig" id="rig-f" hidden>
+  <div class="f-left">
+    <div class="f-rail">和音・七度</div>
+    <div class="f-chord" id="f-chord">—</div>
+    <div class="f-meta" id="f-meta">印を押してください</div>
+    <div class="f-seal" id="f-seal">和音</div>
+    <div class="f-key" id="f-key">C MAJOR</div>
+  </div>
+  <div class="f-col" id="f-col"></div>
+</div>
+
+<div class="rigcap">
+  <p id="rigcap">The chassis is the interface: the LCD is the only readout, the compass printed on the case shows which transform your thumb has selected, and the caps are the only thing you touch.</p>
+</div>
+<div class="hint" id="hint">押して、滑らせる · press a pad and slide without lifting · keys 1–7 play · arrows set the transform · esc recentres</div>
+</div>
+
+<script>
+/* ===== music engine (identical to the Seven Degrees study) ===== */
+const NOTES=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
+const KANJI=['一','二','三','四','五','六','七'];
+const SCALES={major:{label:'Major',jp:'長調',steps:[0,2,4,5,7,9,11]},
+  minor:{label:'Natural Minor',jp:'短調',steps:[0,2,3,5,7,8,10]},
+  dorian:{label:'Dorian',jp:'ドリア',steps:[0,2,3,5,7,9,10]},
+  mixolydian:{label:'Mixolydian',jp:'ミクソ',steps:[0,2,4,5,7,9,10]}};
+const ROMAN=['I','II','III','IV','V','VI','VII'];
+function scaleTone(s,i){const o=Math.floor(i/7);return s[((i%7)+7)%7]+12*o;}
+function buildChord(keyPc,scaleId,deg,transform){
+  const steps=SCALES[scaleId].steps;
+  const t=[0,2,4].map(i=>keyPc+scaleTone(steps,deg+i));
+  let root=t[0];let iv=t.map(n=>n-root);
+  const third=iv[1],fifth=iv[2];
+  let sev=(keyPc+scaleTone(steps,deg+6))-root;sev=((sev%12)+12)%12;if(sev<9)sev+=12;
+  switch(transform){
+    case 'flip3': iv = fifth===6?[0,3,7]:fifth===8?[0,4,7]:[0,third===3?4:3,7]; break;
+    case 'add7': iv=[0,third,fifth,sev];break;
+    case 'dom7': iv=[0,4,7,10];break;
+    case 'sus4': iv=[0,5,7];break;
+    case 'sus2': iv=[0,2,7];break;
+    case 'aug':  iv=[0,4,8];break;
+    case 'add9': iv=[0,third,fifth,14];break;
+    case 'six':  iv=[0,third,fifth,9];break;
+  }
+  root=((root%12)+12)%12;
+  return {root,iv};
+}
+const QNAME={'0,4,7':'','0,3,7':'m','0,3,6':'dim','0,4,8':'aug','0,5,7':'sus4','0,2,7':'sus2',
+ '0,4,7,11':'maj7','0,3,7,11':'m(maj7)','0,3,7,10':'m7','0,3,6,10':'m7♭5','0,4,7,10':'7',
+ '0,4,7,14':'add9','0,3,7,14':'m add9','0,3,6,14':'dim add9','0,4,8,14':'aug add9',
+ '0,4,7,9':'6','0,3,7,9':'m6','0,3,6,9':'dim7','0,4,8,9':'aug6'};
+function chordName(c){const q=QNAME[c.iv.join(',')];return NOTES[c.root]+(q===undefined?'?':q);}
+function chordMidi(c){return c.iv.map(i=>48+c.root+i);}
+function qualityOf(keyPc,scaleId,deg){
+  const c=buildChord(keyPc,scaleId,deg,'base'),th=c.iv[1],fi=c.iv[2];
+  if(th===3&&fi===6)return 'dim'; if(th===4&&fi===8)return 'aug';
+  return th===3?'min':'maj';
+}
+function degreeRoman(keyPc,scaleId,deg){
+  const q=qualityOf(keyPc,scaleId,deg);let r=ROMAN[deg];
+  if(q==='min'||q==='dim')r=r.toLowerCase();
+  if(q==='dim')r+='°'; else if(q==='aug')r+='+';
+  return r;
+}
+const ZONES=[{id:'flip3',j:'長短',e:'maj/min'},{id:'dom7',j:'属七',e:'dom7'},
+ {id:'add7',j:'七度',e:'+7th'},{id:'add9',j:'九度',e:'add9'},
+ {id:'sus4',j:'四度',e:'sus4'},{id:'six',j:'六度',e:'6th'},
+ {id:'sus2',j:'二度',e:'sus2'},{id:'aug',j:'増',e:'aug'}];
+function zoneFor(dx,dy){const r=Math.hypot(dx,dy);if(r<22)return -1;
+  let a=Math.atan2(dx,-dy)*180/Math.PI;if(a<0)a+=360;return Math.round(a/45)%8;}
+
+/* ===== audio ===== */
+const TIMBRES={
+  keys :{a:.004,d:.9,s:.26,r:.55,o1:'triangle',o2:'sine',det:4,cut:4000,q:.6,sw:.5,g:.42,oct:0,sp:0,wet:.22},
+  pad  :{a:.30,d:1.6,s:.85,r:1.4,o1:'sawtooth',o2:'sawtooth',det:9,cut:1500,q:.9,sw:1.1,g:.26,oct:0,sp:0,wet:.45},
+  pluck:{a:.002,d:.30,s:.05,r:.30,o1:'square',o2:'triangle',det:6,cut:3200,q:1.3,sw:.22,g:.30,oct:0,sp:26,wet:.28},
+  bass :{a:.012,d:.5,s:.45,r:.32,o1:'sine',o2:'sawtooth',det:3,cut:700,q:.8,sw:.3,g:.50,oct:-12,sp:0,wet:.06}};
+const SNDLABEL={keys:'Keys',pad:'Warm Pad',pluck:'Pluck',bass:'Sub Bass'};
+const SNDJP={keys:'鍵盤',pad:'パッド',pluck:'撥弦',bass:'低音'};
+let AC=null,dry=null,wet=null;
+function mtof(m){return 440*Math.pow(2,(m-69)/12);}
+function ensureAudio(){
+  if(AC){if(AC.state!=='running')AC.resume();return;}
+  const Ctx=window.AudioContext||window.webkitAudioContext;if(!Ctx)return;
+  AC=new Ctx({latencyHint:'interactive'});
+  const comp=AC.createDynamicsCompressor();comp.threshold.value=-14;comp.ratio.value=3;comp.connect(AC.destination);
+  const master=AC.createGain();master.gain.value=.85;master.connect(comp);
+  dry=AC.createGain();dry.connect(master);
+  wet=AC.createGain();
+  const dl=AC.createDelay(1);dl.delayTime.value=.27;
+  const fb=AC.createGain();fb.gain.value=.3;
+  const lp=AC.createBiquadFilter();lp.type='lowpass';lp.frequency.value=2400;
+  const sl=AC.createGain();sl.gain.value=.3;
+  wet.connect(dl);dl.connect(lp);lp.connect(fb);fb.connect(dl);lp.connect(sl);sl.connect(master);
+  const el=document.getElementById('apill');el.classList.add('live');
+  document.getElementById('atext').textContent='音声あり · live';
+}
+function startVoice(midi,tid,when){
+  const T=TIMBRES[tid],f=mtof(midi+T.oct);
+  const o1=AC.createOscillator();o1.type=T.o1;o1.frequency.value=f;
+  const o2=AC.createOscillator();o2.type=T.o2;o2.frequency.value=f;o2.detune.value=T.det;
+  const flt=AC.createBiquadFilter();flt.type='lowpass';flt.Q.value=T.q;
+  flt.frequency.setValueAtTime(Math.min(15000,T.cut*2.4),when);
+  flt.frequency.exponentialRampToValueAtTime(Math.max(140,T.cut),when+T.sw);
+  const g=AC.createGain();g.gain.setValueAtTime(.0001,when);
+  g.gain.linearRampToValueAtTime(T.g,when+T.a);
+  g.gain.setTargetAtTime(T.g*T.s,when+T.a,T.d/3);
+  const sg=AC.createGain();sg.gain.value=T.wet;
+  o1.connect(flt);o2.connect(flt);flt.connect(g);g.connect(dry);g.connect(sg);sg.connect(wet);
+  o1.start(when);o2.start(when);
+  let dead=false;
+  return {stop(at){if(dead)return;dead=true;const t0=Math.max(at,AC.currentTime);
+    g.gain.cancelScheduledValues(t0);g.gain.setValueAtTime(Math.max(g.gain.value,.0001),t0);
+    g.gain.exponentialRampToValueAtTime(.0001,t0+T.r);
+    try{o1.stop(t0+T.r+.06);o2.stop(t0+T.r+.06);}catch(e){}}};
+}
+const live=new Map();
+function setChord(midis,tid){
+  if(!AC)return;const t=AC.currentTime,want=new Set(midis);
+  live.forEach((v,k)=>{if(!want.has(k)){v.stop(t);live.delete(k);}});
+  const sp=(TIMBRES[tid].sp||0)/1000;let i=0;
+  midis.forEach(n=>{if(!live.has(n))live.set(n,startVoice(n,tid,t+i*sp));i++;});
+}
+function releaseAll(){if(!AC)return;const t=AC.currentTime;live.forEach(v=>v.stop(t));live.clear();}
+
+/* ===== shared state + gesture ===== */
+const S={key:0,scale:'major',sound:'keys',opt:'d'};
+const keysel=document.getElementById('keysel'),scalesel=document.getElementById('scalesel'),sndsel=document.getElementById('sndsel');
+NOTES.forEach((n,i)=>keysel.add(new Option(n,i)));
+Object.keys(SCALES).forEach(k=>scalesel.add(new Option(SCALES[k].jp+' '+SCALES[k].label,k)));
+Object.keys(SNDLABEL).forEach(k=>sndsel.add(new Option(SNDJP[k]+' '+SNDLABEL[k],k)));
+keysel.value=0;scalesel.value='major';sndsel.value='keys';
+keysel.onchange=()=>{S.key=+keysel.value;redrawAll();};
+scalesel.onchange=()=>{S.scale=scalesel.value;redrawAll();};
+sndsel.onchange=()=>{S.sound=sndsel.value;redrawAll();};
+document.addEventListener('pointerdown',ensureAudio,{once:true,capture:true});
+
+const ring=document.createElement('div');ring.className='ring';
+ZONES.forEach((z,i)=>{const l=document.createElement('div');l.className='rl';l.dataset.z=i;
+  l.innerHTML='<span class="j">'+z.j+'</span><span class="e">'+z.e+'</span>';
+  const a=i*45*Math.PI/180;l.style.marginLeft=(88*Math.sin(a))+'px';l.style.marginTop=(-88*Math.cos(a))+'px';
+  ring.appendChild(l);});
+document.body.appendChild(ring);
+function ringShow(k,x,y){ring.dataset.k=k;ring.style.left=x+'px';ring.style.top=y+'px';ring.classList.add('show');ringHot(-1);}
+function ringHot(z){ring.querySelectorAll('.rl').forEach(l=>l.classList.toggle('hot',+l.dataset.z===z));}
+function ringHide(){ring.classList.remove('show');}
+
+let G=null;  /* active gesture: {d, x, y, t, z, rig} */
+function gestureBind(root,sel,rigKey,render){
+  root.addEventListener('pointerdown',e=>{
+    const el=e.target.closest(sel);if(!el)return;
+    ensureAudio();
+    G={d:+el.dataset.d,x:e.clientX,y:e.clientY,t:'base',z:-1,rig:rigKey,el};
+    try{el.setPointerCapture(e.pointerId);}catch(err){}
+    el.dataset.on='1';ringShow(rigKey,e.clientX,e.clientY);render('down');e.preventDefault();
+  });
+  root.addEventListener('pointermove',e=>{
+    if(!G||G.rig!==rigKey)return;
+    const z=zoneFor(e.clientX-G.x,e.clientY-G.y),t=z<0?'base':ZONES[z].id;
+    if(t!==G.t){G.t=t;G.z=z;ringHot(z);render('move');}
+  });
+  const up=()=>{if(!G||G.rig!==rigKey)return;if(G.el)G.el.dataset.on='0';
+    G=null;releaseAll();ringHide();render('up');};
+  root.addEventListener('pointerup',up);root.addEventListener('pointercancel',up);
+}
+</script>
+<script>
+/* ===== D · 玩具 Toy Console ===== */
+const DCAP=['#D8402F','#E07B39','#EFB230','#5B9E52','#2D6FB8','#4A4E9E','#8E4FA0'];
+const DCAPD=['#A62B1E','#B35A22','#BC8616','#3F7338','#1E4E85','#333672','#67357A'];
+const dPads=document.getElementById('d-pads'),dCompass=document.getElementById('d-compass');
+for(let d=0;d<7;d++){
+  const b=document.createElement('button');b.className='dpad';b.dataset.d=d;b.type='button';
+  b.style.setProperty('--c',DCAP[d]);b.style.setProperty('--cd',DCAPD[d]);
+  b.innerHTML='<span class="dcap"><span class="kj">'+KANJI[d]+'</span></span><span class="silk"></span>';
+  dPads.appendChild(b);
+}
+ZONES.forEach((z,i)=>{const l=document.createElement('span');l.className='cl';l.dataset.z=i;l.textContent=z.j;
+  const a=i*45*Math.PI/180;l.style.left=(50+38*Math.sin(a))+'%';l.style.top=(50-38*Math.cos(a))+'%';dCompass.appendChild(l);});
+const dChord=document.getElementById('d-chord'),dRn=document.getElementById('d-rn'),dSnd=document.getElementById('d-snd'),
+      dKey=document.getElementById('d-key'),dScale=document.getElementById('d-scale');
+function renderD(phase){
+  dCompass.querySelectorAll('.cl').forEach(l=>l.classList.toggle('hot',!!G&&+l.dataset.z===G.z));
+  if(!G||phase==='up'){dChord.textContent='----';dRn.textContent='PRESS 1-7';return;}
+  const c=buildChord(S.key,S.scale,G.d,G.t);
+  dChord.textContent=chordName(c);
+  dRn.textContent=degreeRoman(S.key,S.scale,G.d)+'  '+(G.t==='base'?'TRIAD':G.t.toUpperCase());
+  setChord(chordMidi(c),S.sound);
+}
+gestureBind(dPads,'.dpad','d',renderD);
+
+/* ===== E · 祭 Matsuri ===== */
+const ELAN=['#E8453C','#F0803C','#F5C542','#8FBF5A','#45B3A8','#5C8FD6','#D86BA0'];
+const eLan=document.getElementById('e-lanterns');
+for(let d=0;d<7;d++){
+  const b=document.createElement('button');b.className='lan';b.dataset.d=d;b.type='button';
+  b.style.setProperty('--c',ELAN[d]);b.style.marginTop=(Math.pow(d-3,2)*5)+'px';
+  b.innerHTML='<span class="cord"></span><span class="body"><span class="kj">'+KANJI[d]+'</span></span><span class="rn"></span>';
+  eLan.appendChild(b);
+}
+const eChord=document.getElementById('e-chord'),eSub=document.getElementById('e-sub');
+function sparks(x,y,col){
+  if(matchMedia('(prefers-reduced-motion:reduce)').matches)return;
+  for(let i=0;i<9;i++){
+    const s=document.createElement('div');s.className='spark';
+    s.style.left=x+'px';s.style.top=y+'px';s.style.background=i%3?col:'#F5C542';
+    const a=Math.random()*Math.PI*2,r=42+Math.random()*52;
+    s.style.setProperty('--tx',(Math.cos(a)*r)+'px');s.style.setProperty('--ty',(Math.sin(a)*r-18)+'px');
+    s.style.animation='fly '+(480+Math.random()*320)+'ms cubic-bezier(.2,.7,.4,1) forwards';
+    document.body.appendChild(s);setTimeout(()=>s.remove(),900);
+  }
+}
+function renderE(phase){
+  if(!G||phase==='up'){eChord.textContent='—';eSub.textContent='ちょうちんを押してね';return;}
+  const c=buildChord(S.key,S.scale,G.d,G.t);
+  eChord.textContent=chordName(c);
+  eSub.textContent=degreeRoman(S.key,S.scale,G.d)+' · '+(G.t==='base'?'三和音':ZONES.find(z=>z.id===G.t).j);
+  eChord.classList.add('pop');setTimeout(()=>eChord.classList.remove('pop'),130);
+  if(phase==='down')sparks(G.x,G.y,ELAN[G.d]);
+  setChord(chordMidi(c),S.sound);
+}
+gestureBind(eLan,'.lan','e',renderE);
+
+/* ===== F · 判 Hanko ===== */
+const FINK={maj:'var(--f-shu)',min:'var(--f-ai)',dim:'var(--f-sumi)',aug:'var(--f-moegi)'};
+const FINKJP={maj:'長·朱',min:'短·藍',dim:'減·墨',aug:'増·萌'};
+const fCol=document.getElementById('f-col');
+for(let d=0;d<7;d++){
+  const b=document.createElement('button');b.className='seal';b.dataset.d=d;b.type='button';
+  b.innerHTML='<span class="stamp">'+KANJI[d]+'</span><span class="rn"></span>';
+  fCol.appendChild(b);
+}
+const fLegend=document.createElement('div');fLegend.className='f-legend';
+['maj','min','dim','aug'].forEach(q=>{const i=document.createElement('i');
+  i.innerHTML='<b style="background:'+FINK[q]+'"></b>'+FINKJP[q];fLegend.appendChild(i);});
+fCol.appendChild(fLegend);
+const fChord=document.getElementById('f-chord'),fMeta=document.getElementById('f-meta'),
+      fSeal=document.getElementById('f-seal'),fKey=document.getElementById('f-key');
+function renderF(phase){
+  if(!G||phase==='up'){fChord.textContent='—';fMeta.textContent='印を押してください';fSeal.classList.remove('on');return;}
+  const c=buildChord(S.key,S.scale,G.d,G.t),q=qualityOf(S.key,S.scale,G.d);
+  fChord.textContent=chordName(c);
+  fChord.style.color=FINK[q];
+  fMeta.textContent=degreeRoman(S.key,S.scale,G.d)+'  '+(G.t==='base'?'三和音 triad':ZONES.find(z=>z.id===G.t).j+' '+ZONES.find(z=>z.id===G.t).e);
+  fSeal.textContent=KANJI[G.d];fSeal.style.color=FINK[q];fSeal.style.borderColor=FINK[q];fSeal.classList.add('on');
+  setChord(chordMidi(c),S.sound);
+}
+gestureBind(fCol,'.seal','f',renderF);
+
+/* ===== redraw on key/scale/sound change ===== */
+function redrawAll(){
+  const kn=NOTES[S.key],sc=SCALES[S.scale];
+  dKey.textContent='KEY '+kn.replace('♯','#');dScale.textContent=sc.label.toUpperCase();
+  dSnd.textContent=SNDLABEL[S.sound].toUpperCase();
+  fKey.textContent=kn.replace('♯','#')+' '+sc.label.toUpperCase();
+  for(let d=0;d<7;d++){
+    const r=degreeRoman(S.key,S.scale,d),q=qualityOf(S.key,S.scale,d);
+    dPads.children[d].querySelector('.silk').textContent=r;
+    eLan.children[d].querySelector('.rn').textContent=r;
+    const seal=fCol.children[d];
+    seal.style.setProperty('--c',FINK[q]);
+    seal.querySelector('.rn').textContent=r;
+  }
+}
+
+/* ===== switcher, captions, keyboard ===== */
+const rigs={d:document.getElementById('rig-d'),e:document.getElementById('rig-e'),f:document.getElementById('rig-f')};
+const CAPS={
+ d:'The chassis is the interface. The LCD is the only readout, the compass printed on the case shows which transform your thumb has landed on, and the rubber caps are the only thing you touch. Reads as an object you own rather than an app you opened — and the dot-matrix display makes chord names feel like equipment output instead of UI text.',
+ e:'Seven chōchin lanterns hung in an arc. Pressing lights the paper from inside, the lantern dips on its cord, and sparks scatter from your thumb. The loudest of the three and the one that rewards mashing — but the glow is doing real work: it is the only active-state signal you need.',
+ f:'Manga-panel rules, washi ground, two inks. The seal colour is not decoration: vermilion means a major chord, indigo minor, sumi diminished, moegi augmented. You learn the shape of the scale by noticing which column of seals changed colour when you switched from major to minor.'};
+const HINTS={
+ d:'押して、滑らせる · press a cap and slide without lifting · keys 1–7 · arrows set the transform',
+ e:'押して、滑らせる · press a lantern and slide · keys 1–7 · arrows set the transform',
+ f:'押して、滑らせる · press a seal and slide · keys 1–7 · arrows set the transform'};
+const rigcap=document.getElementById('rigcap'),hintEl=document.getElementById('hint');
+document.getElementById('switch').addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;
+  if(G){const r=G.rig;G=null;releaseAll();ringHide();({d:renderD,e:renderE,f:renderF})[r]('up');}
+  S.opt=b.dataset.opt;
+  [...e.currentTarget.children].forEach(x=>x.setAttribute('aria-pressed',x===b?'true':'false'));
+  Object.keys(rigs).forEach(k=>rigs[k].hidden=k!==S.opt);
+  rigcap.textContent=CAPS[S.opt];hintEl.textContent=HINTS[S.opt];
+});
+const RENDER={d:renderD,e:renderE,f:renderF};
+const SEL={d:'.dpad',e:'.lan',f:'.seal'};
+const ROOT={d:dPads,e:eLan,f:fCol};
+const downKeys=new Set();
+addEventListener('keydown',ev=>{
+  if(ev.target.tagName==='SELECT'||ev.target.tagName==='INPUT')return;
+  const n=parseInt(ev.key,10);
+  if(n>=1&&n<=7){
+    if(downKeys.has(ev.key))return;downKeys.add(ev.key);ev.preventDefault();ensureAudio();
+    const el=ROOT[S.opt].querySelector(SEL[S.opt]+'[data-d="'+(n-1)+'"]');if(!el)return;
+    const r=el.getBoundingClientRect(),x=r.left+r.width/2,y=r.top+r.height/2;
+    G={d:n-1,x,y,t:'base',z:-1,rig:S.opt,el};el.dataset.on='1';
+    ringShow(S.opt,x,y);RENDER[S.opt]('down');return;
+  }
+  const arrows={ArrowUp:0,ArrowRight:2,ArrowDown:4,ArrowLeft:6};
+  if(ev.key in arrows){ev.preventDefault();
+    if(!G)return;G.z=arrows[ev.key];G.t=ZONES[G.z].id;ringHot(G.z);RENDER[G.rig]('move');return;}
+  if(ev.key==='Escape'&&G){G.z=-1;G.t='base';ringHot(-1);RENDER[G.rig]('move');}
+});
+addEventListener('keyup',ev=>{
+  const n=parseInt(ev.key,10);
+  if(n>=1&&n<=7&&downKeys.delete(ev.key)&&G){
+    if(G.el)G.el.dataset.on='0';const r=G.rig;G=null;releaseAll();ringHide();RENDER[r]('up');
+  }
+});
+redrawAll();
+</script>
