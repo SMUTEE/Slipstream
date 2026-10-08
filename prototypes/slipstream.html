@@ -96,7 +96,7 @@ header p{color:var(--fg-dim);margin:10px auto 0;max-width:48ch;font-size:14.5px;
 .rack{margin-top:26px;padding-block:18px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:9px}
 .row{display:flex;gap:9px;align-items:stretch;flex-wrap:wrap;min-width:0}
 /* five value fields: a grid so a wrapped one never stretches across the row */
-.rowa{display:grid;grid-template-columns:repeat(auto-fit,minmax(116px,1fr))}
+.rowa{display:grid;grid-template-columns:repeat(auto-fit,minmax(108px,1fr))}
 .rowb .field{flex:0 1 210px}
 .field{position:relative;flex:1 1 130px;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:3px;
   background:linear-gradient(170deg,#131A2B,#0A0E18);border:1px solid var(--line);border-radius:12px;
@@ -183,6 +183,17 @@ input[type=range]::-moz-range-thumb{width:15px;height:15px;border:0;border-radiu
 .field.fslider::after{display:none}
 .field.fslider input[type=range]{position:absolute;left:13px;right:13px;bottom:8px;width:auto;flex:none;min-width:0;height:3px}
 .field.fslider input[type=range]::-webkit-slider-thumb{width:11px;height:11px}
+.field.fcheck{cursor:pointer}
+.field.fcheck::after{display:none}
+.field.fcheck input{position:absolute;opacity:0;width:0;height:0}
+.field.fcheck b{display:flex;align-items:center;gap:9px}
+.field.fcheck em{font-style:normal}
+.field.fcheck i{width:17px;height:17px;border-radius:5px;border:1.5px solid var(--fg-faint);
+  position:relative;flex:0 0 auto;transition:background .15s,border-color .15s,box-shadow .15s}
+.field.fcheck input:checked+i{background:var(--hue);border-color:var(--hue);box-shadow:0 0 14px -3px var(--hue)}
+.field.fcheck input:checked+i::after{content:"";position:absolute;left:5px;top:1.5px;width:4px;height:9px;
+  border:solid var(--void);border-width:0 2px 2px 0;transform:rotate(45deg)}
+.field.fcheck input:focus-visible+i{outline:2px solid var(--hue);outline-offset:2px}
 .tsecondary{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-top:14px;border-top:1px solid var(--line)}
 .minifield{position:relative;display:flex;align-items:center;gap:9px;height:38px;padding:0 13px;border-radius:10px;
   border:1px solid var(--line);background:linear-gradient(170deg,#131A2B,#0A0E18);cursor:pointer}
@@ -271,12 +282,13 @@ input[type=range]::-moz-range-thumb{width:15px;height:15px;border:0;border-radiu
     <label class="field"><span>Key</span><select id="keysel"></select></label>
     <label class="field"><span>Scale</span><select id="scalesel"></select></label>
     <label class="field fslider"><span>Tempo</span><b id="bpmv">96</b><input type="range" id="bpm" min="60" max="160" step="1" value="96" aria-label="Tempo"></label>
+    <label class="field fcheck"><span>Click</span>
+      <b><input type="checkbox" id="clickbox" checked><i></i><em id="clicktxt">On</em></b></label>
     <button class="field fbtn" id="invbtn" aria-label="Voicing"><span>Voicing</span><b class="fv">Root</b></button>
     <button class="field fbtn" id="octbtn" aria-label="Octave"><span>Octave</span><b class="fv">0</b></button>
   </div>
   <div class="row rowb">
     <label class="field"><span>Voice</span><select id="sndsel"></select></label>
-    <button class="chip" id="clickbtn" aria-pressed="true">Click</button>
     <button class="chip" id="slidebtn" aria-pressed="true">Slide</button>
     <button class="chip" id="holdbtn" aria-pressed="false">Hold</button>
     <button class="chip" id="tunebtn" aria-pressed="false" aria-controls="tunepanel">Tune</button>
@@ -785,11 +797,11 @@ function killScheduled(){
 function click(when,accent){
   if(!AC)return;
   const o=AC.createOscillator(),g=AC.createGain();
-  o.type='triangle';o.frequency.value=accent?1600:1050;
+  o.type='sine';o.frequency.value=accent?1320:880;
   g.gain.setValueAtTime(.0001,when);
-  g.gain.linearRampToValueAtTime(accent?.16:.085,when+.002);
-  g.gain.exponentialRampToValueAtTime(.0001,when+.06);
-  o.connect(g);g.connect(dry);o.start(when);o.stop(when+.09);
+  g.gain.linearRampToValueAtTime(accent?.05:.026,when+.002);   /* a cue, not an instrument */
+  g.gain.exponentialRampToValueAtTime(.0001,when+.045);
+  o.connect(g);g.connect(dry);o.start(when);o.stop(when+.07);
 }
 
 /* ---- transport ---- */
@@ -968,7 +980,14 @@ function renderLayers(){
 el('recbtn').onclick=recToggle;
 el('runbtn').onclick=()=>{LP.running?loopStop():loopStart();};
 el('clearbtn').onclick=()=>{loopStop();LP.layers=[];LP.cur=null;LP.held=null;renderLayers();};
-el('clickbtn').onclick=e=>{S.click=!S.click;e.currentTarget.setAttribute('aria-pressed',S.click?'true':'false');save();};
+const CKEY='slipstream.click';
+try{const v=localStorage.getItem(CKEY);if(v!==null)S.click=v==='1';}catch(e){}
+el('clickbox').checked=S.click;el('clicktxt').textContent=S.click?'On':'Off';
+el('clickbox').onchange=e=>{
+  S.click=e.target.checked;
+  el('clicktxt').textContent=S.click?'On':'Off';
+  try{localStorage.setItem(CKEY,S.click?'1':'0');}catch(err){}
+};
 el('qbtn').onclick=e=>{LP.q=!LP.q;e.currentTarget.setAttribute('aria-pressed',LP.q?'true':'false');};
 el('bpm').oninput=e=>{LP.bpm=+e.target.value;el('bpmv').textContent=LP.bpm;resync();};
 el('barsel').onchange=e=>{LP.bars=+e.target.value;drawTicks();resync();};

@@ -107,8 +107,11 @@ now fall outside the loop rather than letting them bleed into the next pass.
 
 Tempo and the metronome sit with key and scale rather than inside the loop card. They describe
 the instrument, not the recorder, and a tempo you cannot see while setting up a take is no use.
-The click is accented on the downbeat and on by default, because the first layer is otherwise
-recorded against silence and every later layer inherits that guess.
+A checkbox beside the tempo turns it on and off. It is accented on the downbeat and on by
+default, because the first layer is otherwise recorded against silence and every later layer
+inherits that guess. It is pitched and levelled to sit under the music as a cue rather than
+compete with it. The setting is remembered in your browser and deliberately kept out of shared
+arrangements — whether someone else wants a click is their business, not yours.
 
 Timing is free by default. Quantize snaps to eighth notes, and is off because quantising a
 chord instrument tends to flatten the feel.
