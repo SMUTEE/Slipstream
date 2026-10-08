@@ -123,14 +123,13 @@ Plus Nylon, Mallet and Sub.
 ## Layout
 
 ```
-index.html                        landing page
-prototypes/slipstream.html        the current build
-prototypes/waon-three-ways.html   three Japanese visual directions
-prototypes/chord-ui-options.html  three interaction models + a UX review of the spec
+index.html                   landing page
+prototypes/slipstream.html   the instrument
 ```
 
-The two studies are kept because the decisions in them are still live. `chord-ui-options.html`
-also carries a fourteen-point review of the original product spec.
+Earlier design studies — three interaction models with a review of the original product spec,
+and three Japanese visual directions — are not part of the live site. They remain in git
+history at `86ada28`.
 
 ## State of play
 
