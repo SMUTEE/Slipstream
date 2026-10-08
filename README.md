@@ -37,6 +37,12 @@ supertonic and `Bm7♭5` on the leading tone without any special cases.
 
 ## Controls
 
+Controls sit in two groups under the pads. The first row is harmony — key, scale, voicing and
+octave. The second is voice and feel — the synth, slide, hold, and a **Tune** panel holding the
+three continuous parameters (glide time, reverb, delay) that you set once and leave. The loop
+transport is its own card, with record and play as the only full-size controls in it.
+
+
 | Key | Does |
 |-----|------|
 | `1`–`7` | Play a scale degree |
