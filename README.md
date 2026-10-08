@@ -88,24 +88,51 @@ pitch rather than appearing out of nowhere.
 
 ## Loops
 
-Press record and play. The loop runs for a fixed number of bars and wraps; record again to
-stack another layer on top, up to four.
+Press record and play along to the click. The loop runs for a set number of bars and wraps;
+record again to stack another layer on top, up to four.
 
 Each layer keeps whichever voice was selected when you played it, so you can put **Sub**
 underneath **Glass**. Layers store scale degrees and knob positions rather than notes, so
 changing the key or the scale transposes every layer at once — the same idea that lets seven
 pads keep their meaning across twelve keys.
 
+Layers hold **beats, not seconds**. The loop is always `bars x 4` beats and tempo maps beats
+onto real time at playback, so the tempo control speeds the whole arrangement up or down with
+every layer staying locked to every other one. Shortening the bar count trims the chords that
+now fall outside the loop rather than letting them bleed into the next pass.
+
+Tempo and the metronome sit with key and scale rather than inside the loop card. They describe
+the instrument, not the recorder, and a tempo you cannot see while setting up a take is no use.
+The click is accented on the downbeat and on by default, because the first layer is otherwise
+recorded against silence and every later layer inherits that guess.
+
 Timing is free by default. Quantize snaps to eighth notes, and is off because quantising a
 chord instrument tends to flatten the feel.
 
-A thin ring around the outside of the chassis is the playhead, with a tick per bar. It turns
-red while recording.
+### Knowing where you are
+
+While the transport runs, the loop card shows the time left in the pass and the current bar and
+beat, turning red while recording, so you can see when to stop.
+
+The ring around the outside of the chassis is that same clock drawn round the edge, with a tick
+per bar and a faint track behind it so it is visible at rest. It is deliberately **not** the
+accent colour: the accent means the knob, and drawing the clock in the same blue made two
+unrelated things look like one.
+
+### Under it
 
 Playback and the live instrument use separate audio paths. Live playing runs through the
-five-voice glide pool so slide keeps working; recorded layers use scheduled one-shot voices
-against `AudioContext.currentTime`, capped at 26 concurrent. That scheduler is also what the
-12-pulse rhythm engine will eventually run on.
+five-voice glide pool so slide keeps working; recorded layers use one-shot voices scheduled
+against `AudioContext.currentTime`. That scheduler is also what the 12-pulse rhythm engine will
+eventually run on.
+
+Stop is immediate. A whole pass is handed to the audio clock in advance, so stopping cuts the
+queued notes short rather than letting them ring out.
+
+Voices are capped by how many actually **overlap**, not by how many are queued ahead — counting
+the queue meant a few layers could exceed the ceiling the moment a pass was scheduled and fall
+silent. At the ceiling the longest-ringing note is stolen rather than the newest one refused,
+since silencing the chord you just played is the worst of the options.
 
 ## Saving and sharing
 
