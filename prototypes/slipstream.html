@@ -95,6 +95,8 @@ header p{color:var(--fg-dim);margin:10px auto 0;max-width:48ch;font-size:14.5px;
 /* ---------- controls ---------- */
 .rack{margin-top:26px;padding-block:18px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:9px}
 .row{display:flex;gap:9px;align-items:stretch;flex-wrap:wrap;min-width:0}
+/* five value fields: a grid so a wrapped one never stretches across the row */
+.rowa{display:grid;grid-template-columns:repeat(auto-fit,minmax(116px,1fr))}
 .rowb .field{flex:0 1 210px}
 .field{position:relative;flex:1 1 130px;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:3px;
   background:linear-gradient(170deg,#131A2B,#0A0E18);border:1px solid var(--line);border-radius:12px;
@@ -171,7 +173,16 @@ input[type=range]::-moz-range-thumb{width:15px;height:15px;border:0;border-radiu
 .loopcard{border:1px solid var(--line);border-radius:18px;padding:17px;display:flex;flex-direction:column;gap:14px;
   background:linear-gradient(175deg,#0E1422,#080B12)}
 .tprimary{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-.tempo{display:flex;align-items:center;gap:12px;flex:1 1 190px;min-width:0}
+.clock{margin-left:auto;text-align:right;line-height:1.1}
+.clock b{display:block;font-family:var(--mono);font-size:21px;font-weight:500;color:var(--fg);font-variant-numeric:tabular-nums}
+.clock span{font-family:var(--mono);font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--fg-faint)}
+.clock[data-rec="1"] b{color:#FF4D5E}
+.clock[data-rec="1"] span{color:#FF8A95}
+.field.fslider{justify-content:flex-start;padding-top:8px}
+.field.fslider>b{font-family:var(--ui);font-size:14.5px;font-weight:500;color:var(--fg);font-variant-numeric:tabular-nums}
+.field.fslider::after{display:none}
+.field.fslider input[type=range]{position:absolute;left:13px;right:13px;bottom:8px;width:auto;flex:none;min-width:0;height:3px}
+.field.fslider input[type=range]::-webkit-slider-thumb{width:11px;height:11px}
 .tsecondary{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-top:14px;border-top:1px solid var(--line)}
 .minifield{position:relative;display:flex;align-items:center;gap:9px;height:38px;padding:0 13px;border-radius:10px;
   border:1px solid var(--line);background:linear-gradient(170deg,#131A2B,#0A0E18);cursor:pointer}
@@ -237,6 +248,7 @@ input[type=range]::-moz-range-thumb{width:15px;height:15px;border:0;border-radiu
   <div class="module" id="module">
     <svg class="ringsvg" viewBox="0 0 400 400" aria-hidden="true">
       <g id="dots"></g>
+      <circle id="phtrack" cx="200" cy="200" r="181" fill="none" stroke="#161D2C" stroke-width="3" opacity="0"></circle>
       <g id="ticks"></g>
       <path class="ph" id="ph" d=""></path>
       <path class="arc" id="arc" d=""></path>
@@ -255,14 +267,16 @@ input[type=range]::-moz-range-thumb{width:15px;height:15px;border:0;border-radiu
 <div class="pads" id="pads"></div>
 
 <div class="rack">
-  <div class="row">
+  <div class="row rowa">
     <label class="field"><span>Key</span><select id="keysel"></select></label>
     <label class="field"><span>Scale</span><select id="scalesel"></select></label>
+    <label class="field fslider"><span>Tempo</span><b id="bpmv">96</b><input type="range" id="bpm" min="60" max="160" step="1" value="96" aria-label="Tempo"></label>
     <button class="field fbtn" id="invbtn" aria-label="Voicing"><span>Voicing</span><b class="fv">Root</b></button>
     <button class="field fbtn" id="octbtn" aria-label="Octave"><span>Octave</span><b class="fv">0</b></button>
   </div>
   <div class="row rowb">
     <label class="field"><span>Voice</span><select id="sndsel"></select></label>
+    <button class="chip" id="clickbtn" aria-pressed="true">Click</button>
     <button class="chip" id="slidebtn" aria-pressed="true">Slide</button>
     <button class="chip" id="holdbtn" aria-pressed="false">Hold</button>
     <button class="chip" id="tunebtn" aria-pressed="false" aria-controls="tunepanel">Tune</button>
@@ -282,12 +296,11 @@ input[type=range]::-moz-range-thumb{width:15px;height:15px;border:0;border-radiu
     <div class="tprimary">
       <button class="rec" id="recbtn" aria-pressed="false" aria-label="Record"><i></i></button>
       <button class="chip run" id="runbtn" aria-pressed="false">Play</button>
-      <div class="tempo"><span class="tl">BPM</span><input type="range" id="bpm" min="60" max="160" step="1" value="96" aria-label="Tempo"><span class="tv" id="bpmv">96</span></div>
+      <div class="clock" id="clock" data-rec="0"><b id="clockmain">—</b><span id="clocksub">stopped</span></div>
     </div>
     <div class="tsecondary">
       <label class="minifield"><span>Presets</span><select id="presetsel" aria-label="Load a preset"><option value="">load…</option></select></label>
       <label class="minifield"><span>Bars</span><select id="barsel"><option>2</option><option selected>4</option><option>8</option></select></label>
-      <button class="chip sm" id="clickbtn" aria-pressed="true">Click</button>
       <button class="chip sm" id="qbtn" aria-pressed="false">Quantize</button>
       <button class="chip sm" id="clearbtn">Clear</button>
       <button class="chip sm" id="sharebtn" aria-pressed="false" aria-controls="sharepanel">Share</button>
@@ -692,10 +705,22 @@ function loopPosBeats(){return loopPos()/beatLen();}
 function loopPos(){if(!LP.running||!AC)return 0;const L=loopLen();return ((AC.currentTime-LP.origin)%L+L)%L;}
 
 /* one-shot voice for scheduled layer playback — the live pool keeps its glide */
-let activeT=0;
+let sched=[];                      /* notes handed to the audio clock but not yet finished */
+const MAXVOICES=24;
 function transientNote(midi,sid,when,dur){
-  if(!AC||activeT>26)return;
+  if(!AC)return;
   const T=SOUNDS[sid],f=mtof(midi+T.oct);
+  const off0=when+Math.max(dur,.1),end0=off0+T.r+.15,now=AC.currentTime;
+  sched=sched.filter(x=>x.end>now);
+  /* count what actually overlaps this note, not everything queued ahead of it */
+  let overlap=0,oldest=null;
+  for(let i=0;i<sched.length;i++){
+    const x=sched[i];
+    if(x.start<end0&&x.end>when){overlap++;if(!oldest||x.start<oldest.start)oldest=x;}
+  }
+  /* At the ceiling, take the voice that has been ringing longest rather than
+     refusing the new one — silencing the chord just played is the worst option. */
+  if(overlap>=MAXVOICES){if(!oldest)return;cutShort(oldest,when);}
   const o1=AC.createOscillator(),o2=AC.createOscillator(),o3=AC.createOscillator();
   const g1=AC.createGain(),g2=AC.createGain(),g3=AC.createGain();
   const flt=AC.createBiquadFilter();flt.type='lowpass';flt.Q.value=T.q;
@@ -714,18 +739,42 @@ function transientNote(midi,sid,when,dur){
     mg.gain.setValueAtTime(f*T.fm.idx,when);
     mg.gain.linearRampToValueAtTime(f*T.fm.idx*.12,when+T.fm.dec);
     mo.connect(mg);mg.connect(o1.frequency);mo.start(when);}
-  const lvl=T.lvl*.8,off=when+Math.max(dur,.1);
+  const lvl=T.lvl*.8,off=off0;
   amp.gain.setValueAtTime(.0001,when);
   amp.gain.linearRampToValueAtTime(lvl,when+T.a);
   amp.gain.setTargetAtTime(lvl*T.s,when+T.a,Math.max(T.d/3,.02));
   amp.gain.setTargetAtTime(.0001,off,Math.max(T.r/3,.03));
   flt.frequency.setValueAtTime(Math.min(16000,T.cut*2.6),when);
   flt.frequency.exponentialRampToValueAtTime(T.cut,when+T.ce);
-  const end=off+T.r+.15;
+  const end=end0;
   [o1,o2,o3].forEach(o=>{o.start(when);o.stop(end);});
   if(mo)mo.stop(end);
-  activeT++;
-  o1.onended=()=>{activeT--;try{amp.disconnect();send.disconnect();}catch(e){}};
+  sched.push({amp:amp,oscs:mo?[o1,o2,o3,mo]:[o1,o2,o3],start:when,end:end});
+  o1.onended=()=>{try{amp.disconnect();send.disconnect();}catch(e){}};
+}
+function cutShort(x,at){
+  const t=Math.max(at,AC.currentTime);
+  try{
+    x.amp.gain.cancelScheduledValues(t);
+    x.amp.gain.setValueAtTime(Math.max(x.amp.gain.value,.0001),t);
+    x.amp.gain.exponentialRampToValueAtTime(.0001,t+.05);
+    x.oscs.forEach(o=>{try{o.stop(t+.08);}catch(e){}});
+  }catch(e){}
+  x.end=t+.08;
+}
+/* Stop means stop. Anything already queued in the audio clock is cut short. */
+function killScheduled(){
+  if(!AC)return;
+  const t=AC.currentTime;
+  sched.forEach(x=>{
+    try{
+      x.amp.gain.cancelScheduledValues(t);
+      x.amp.gain.setValueAtTime(Math.max(x.amp.gain.value,.0001),t);
+      x.amp.gain.exponentialRampToValueAtTime(.0001,t+.07);
+      x.oscs.forEach(o=>{try{o.stop(t+.1);}catch(e){}});
+    }catch(e){}
+  });
+  sched=[];
 }
 
 function click(when,accent){
@@ -744,14 +793,15 @@ function loopStart(){
   LP.running=true;LP.origin=AC.currentTime+.05;LP.passN=0;
   LP.timer=setInterval(loopTick,25);loopTick();
   LP.raf=requestAnimationFrame(loopFrame);
-  const b=el('runbtn');b.setAttribute('aria-pressed','true');b.textContent='Stop';
+  const b=el('runbtn');b.setAttribute('aria-pressed','true');b.textContent='Stop';fmtClock();
 }
 function loopStop(){
   if(LP.rec)recToggle();
   LP.running=false;clearInterval(LP.timer);LP.timer=null;
   if(LP.raf)cancelAnimationFrame(LP.raf);LP.raf=null;
+  killScheduled();
   const b=el('runbtn');b.setAttribute('aria-pressed','false');b.textContent='Play';
-  drawPh(0);renderLayers();
+  drawPh(0);fmtClock();renderLayers();
 }
 function resync(){if(!LP.running||!AC)return;LP.origin=AC.currentTime;LP.passN=0;}
 function loopTick(){
@@ -780,13 +830,26 @@ function schedulePass(t0){
   });
 }
 function fire(ly){if(!ly.el)return;ly.el.dataset.fire='1';setTimeout(()=>{if(ly.el)ly.el.dataset.fire='0';},140);}
-function loopFrame(){if(!LP.running)return;drawPh(loopPos()/loopLen());LP.raf=requestAnimationFrame(loopFrame);}
+function loopFrame(){if(!LP.running)return;drawPh(loopPos()/loopLen());fmtClock();LP.raf=requestAnimationFrame(loopFrame);}
 function drawPh(f){
-  const ph=el('ph');
+  const ph=el('ph'),tr=el('phtrack');
+  tr.setAttribute('opacity',LP.running?'1':'0');
   if(!(f>.002)){ph.setAttribute('d','');return;}
   ph.setAttribute('d',arcD(200,200,181,0,Math.min(359.8,f*360)));
-  ph.setAttribute('stroke',LP.rec?'#FF4D5E':hue());
-  ph.setAttribute('stroke-width','2.5');ph.setAttribute('opacity','.8');
+  /* never the accent hue — that colour means the knob, not the clock */
+  ph.setAttribute('stroke',LP.rec?'#FF4D5E':'#C6CEDE');
+  ph.setAttribute('stroke-width','3');
+  ph.setAttribute('opacity',LP.rec?'.95':'.55');
+  ph.style.filter=LP.rec?'drop-shadow(0 0 7px #FF4D5E)':'none';
+}
+function fmtClock(){
+  const main=el('clockmain'),sub=el('clocksub'),box=el('clock');
+  if(!LP.running||!AC){main.textContent='\u2014';sub.textContent='stopped';box.dataset.rec='0';return;}
+  const L=loopLen(),pos=loopPos(),bl=beatLen();
+  const beat=Math.floor(pos/bl),bar=Math.floor(beat/4)+1,bt=(beat%4)+1;
+  main.textContent=(L-pos).toFixed(1)+'s';
+  sub.textContent=(LP.rec?'recording \u00b7 ':'')+'bar '+bar+'/'+LP.bars+' \u00b7 beat '+bt;
+  box.dataset.rec=LP.rec?'1':'0';
 }
 function drawTicks(){
   const g=el('ticks');g.innerHTML='';
