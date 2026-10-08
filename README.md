@@ -46,6 +46,9 @@ supertonic and `Bm7♭5` on the leading tone without any special cases.
 | `Space` | Latch the chord so you can change key and hear it slide |
 | `G` | Toggle slide |
 | `Esc` | Recentre the knob |
+| `R` | Record — starts the loop if it isn't running, commits the layer on the second press |
+| `Enter` | Start or stop the loop |
+| `Backspace` | Delete the last layer |
 
 Dragging the knob and pressing-then-sliding from a pad both work on touch.
 
@@ -59,6 +62,27 @@ Turn on **Hold**, play a chord, then change the **Key** — the whole chord slid
 
 When a chord grows (triad to a 9th) the joining voice enters from its nearest neighbour's
 pitch rather than appearing out of nowhere.
+
+## Loops
+
+Press record and play. The loop runs for a fixed number of bars and wraps; record again to
+stack another layer on top, up to four.
+
+Each layer keeps whichever voice was selected when you played it, so you can put **Sub**
+underneath **Glass**. Layers store scale degrees and knob positions rather than notes, so
+changing the key or the scale transposes every layer at once — the same idea that lets seven
+pads keep their meaning across twelve keys.
+
+Timing is free by default. Quantize snaps to eighth notes, and is off because quantising a
+chord instrument tends to flatten the feel.
+
+A thin ring around the outside of the chassis is the playhead, with a tick per bar. It turns
+red while recording.
+
+Playback and the live instrument use separate audio paths. Live playing runs through the
+five-voice glide pool so slide keeps working; recorded layers use scheduled one-shot voices
+against `AudioContext.currentTime`, capped at 26 concurrent. That scheduler is also what the
+12-pulse rhythm engine will eventually run on.
 
 ## Voices
 
@@ -83,13 +107,12 @@ also carries a fourteen-point review of the original product spec.
 ## State of play
 
 Working: 12 keys, 4 scales, 7 degrees, 12 detents, 8 voices, portamento, knob and touch
-gestures, full keyboard control. The chord engine is verified across all 4,032 combinations of
-key × scale × degree × detent.
-
-Next: short loop recording with layering, which needs a transport clock. That clock is also
-what the 12-pulse rhythm engine will run on later.
+gestures, full keyboard control, and four-layer loop recording on a lookahead scheduler. The
+chord engine is verified across all 4,032 combinations of key × scale × degree × detent.
 
 Not built yet: per-pad sound assignment, a progression strip, save and share URLs, MIDI out.
+Loops currently live only in memory — they do not survive a reload yet, which is the next
+thing worth fixing since the state is already serialisable.
 
 ## Running it
 
