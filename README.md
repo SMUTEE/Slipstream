@@ -125,8 +125,9 @@ seven characters: degree, detent, start in milliseconds, length in centiseconds.
 validates every field and refuses anything malformed rather than half-loading it.
 
 Where the host passes a URL fragment through, the link restores the arrangement on open. The
-paste-a-code box works everywhere regardless. Tokens shared before voicing existed still load,
-defaulting to root position.
+paste-a-code box works everywhere regardless. Older tokens still load: ones that predate
+voicing default to root position, and ones that stored seconds are converted to beats using
+their own tempo.
 
 Because layers hold scale degrees rather than notes, a shared arrangement is transposable by
 whoever opens it — they can move it to their own key without losing what you wrote.
