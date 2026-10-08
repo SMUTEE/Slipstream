@@ -46,11 +46,28 @@ supertonic and `Bm7♭5` on the leading tone without any special cases.
 | `Space` | Latch the chord so you can change key and hear it slide |
 | `G` | Toggle slide |
 | `Esc` | Recentre the knob |
+| `V` | Cycle the voicing — root, first inversion, second inversion |
+| `O` | Shift the octave |
 | `R` | Record — starts the loop if it isn't running, commits the layer on the second press |
 | `Enter` | Start or stop the loop |
 | `Backspace` | Delete the last layer |
 
 Dragging the knob and pressing-then-sliding from a pad both work on touch.
+
+## Voicing
+
+Chord identity and voicing are separate concepts, in the code as well as the documentation.
+The engine decides *which notes*; the voicing stage decides *where they sit*. Root position,
+first and second inversion, and an octave shift either way.
+
+```
+Cmaj7   root    C  E  G  B
+        1st     E  G  B  C
+        2nd     G  B  C  E
+```
+
+Inversion applies to recorded layers too, so you can re-voice a whole arrangement after the
+fact without re-recording it.
 
 ## Slide
 
@@ -96,12 +113,14 @@ is 824, which fits a URL comfortably.
 1002o40-00000006o401xg6o503uw6o335sc6o     C – G – Am – Fmaj7, 96 bpm, 4 bars
 ```
 
-The header is version, key, scale, tempo, bars and quantize. Each chord after it is a fixed
+The header is version, key, scale, tempo, bars, quantize, voicing, octave and the two effect
+levels. Each chord after it is a fixed
 seven characters: degree, detent, start in milliseconds, length in centiseconds. Decoding
 validates every field and refuses anything malformed rather than half-loading it.
 
 Where the host passes a URL fragment through, the link restores the arrangement on open. The
-paste-a-code box works everywhere regardless.
+paste-a-code box works everywhere regardless. Tokens shared before voicing existed still load,
+defaulting to root position.
 
 Because layers hold scale degrees rather than notes, a shared arrangement is transposable by
 whoever opens it — they can move it to their own key without losing what you wrote.
@@ -120,11 +139,33 @@ a filter envelope and a per-voice reverb send.
 Glass and Bell are true FM. Organ is additive drawbars. Air and Choir are detuned saw stacks.
 Plus Nylon, Mallet and Sub.
 
+## Effects
+
+Reverb and delay, both global. The reverb is a convolver running on an impulse response
+generated at runtime — decaying noise, so there is no audio file to ship. **Space** and
+**Echo** set the two send levels, and both travel in a shared arrangement.
+
+## Tests
+
+```
+node tests/run.mjs
+```
+
+No dependencies and no build. Because the app is a single HTML file, the suite pulls the pure
+modules — the chord engine and the share codec — straight out of it and runs them in Node.
+Neither touches the DOM, which is the property that makes this work and is worth keeping true.
+
+22 assertions covering chord generation across all 4,032 key × scale × degree × detent
+combinations, diatonic sevenths, the diminished-triad edge case, degree stability across keys,
+inversion and octave maths, and 3,000 randomised round trips through the share codec plus its
+rejection of malformed input.
+
 ## Layout
 
 ```
 index.html                   landing page
 prototypes/slipstream.html   the instrument
+tests/run.mjs                the suite
 ```
 
 Earlier design studies — three interaction models with a review of the original product spec,
@@ -133,17 +174,26 @@ history at `86ada28`.
 
 ## State of play
 
-Working: 12 keys, 4 scales, 7 degrees, 12 detents, 8 voices, portamento, knob and touch
-gestures, full keyboard control, four-layer loop recording on a lookahead scheduler, presets,
-autosave and shareable arrangements.
+**The MVP is complete**, with one item dropped on purpose.
 
-Verified: the chord engine across all 4,032 combinations of key × scale × degree × detent, and
-the share encoder across 4,000 randomised arrangements with zero round-trip failures.
+Working: 12 keys, 4 scales, 7 scale-degree pads, 12 harmonic detents, inversions and octave
+shift, 8 synth voices with ADSR and a filter, reverb and delay, portamento, pooled voices,
+mouse, touch and full keyboard control, four-layer loop recording on a lookahead scheduler,
+presets, autosave and shareable arrangements.
 
-Not built yet: editing a recorded layer (right now a layer is opaque and your only fix is to
-replay it), per-pad sound assignment, and MIDI out. Per-pad sound is deliberately parked —
-layers already give you per-voice separation, and a sound picker on every pad costs screen
-space permanently.
+Dropped on purpose: **per-pad sound, volume and octave**, and the Link Sounds toggle that went
+with them. Layers already give per-voice separation — a bass line is a layer, not a pad
+setting — and a sound picker on every pad would cost screen space permanently to solve a
+problem that is already solved.
+
+Verified: 22 assertions in `tests/run.mjs`, and layout and touch targets at 375×812, where the
+pads come out 77×96 px. Not yet verified on physical hardware — iOS Safari's audio behaviour in
+particular deserves a real device before this is called finished.
+
+Next, in order: editing a recorded layer, which is the one real gap left in the interface;
+porting to the modular architecture before the surface grows further; then the 12-pulse rhythm
+engine, which the loop scheduler has already unblocked. MIDI out stays a progressive
+enhancement.
 
 ## Running it
 

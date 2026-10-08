@@ -188,7 +188,8 @@ input[type=range]{accent-color:var(--hue);width:110px;vertical-align:middle}
       <path class="ph" id="ph" d=""></path>
       <path class="arc" id="arc" d=""></path>
     </svg>
-    <div class="knob" id="knob">
+    <div class="knob" id="knob" tabindex="0" role="slider" aria-label="Chord colour"
+         aria-valuemin="0" aria-valuemax="11" aria-valuenow="0" aria-valuetext="triad">
       <div class="knobrot" id="knobrot"><div class="ind"></div></div>
       <div class="face idle" id="face">
         <div class="chord" id="chord">—</div>
@@ -207,6 +208,10 @@ input[type=range]{accent-color:var(--hue);width:110px;vertical-align:middle}
   <button class="tog" id="slidebtn" aria-pressed="true">Slide</button>
   <div class="seg"><input type="range" id="glide" min="20" max="600" step="10" value="160" aria-label="Glide time"><span class="glideval" id="glideval">160 ms</span></div>
   <button class="tog" id="holdbtn" aria-pressed="false">Hold</button>
+  <button class="tog" id="invbtn">Root</button>
+  <button class="tog" id="octbtn">Oct 0</button>
+  <div class="seg"><span class="lab">Space</span><input type="range" id="rvb" min="0" max="100" value="45" aria-label="Reverb"></div>
+  <div class="seg"><span class="lab">Echo</span><input type="range" id="dly" min="0" max="100" value="34" aria-label="Delay"></div>
   <div class="apill" id="apill"><span class="d"></span><span id="atext">silent — tap to start</span></div>
 </div>
 
@@ -252,6 +257,7 @@ input[type=range]{accent-color:var(--hue);width:110px;vertical-align:middle}
       <div class="kmrow"><kbd>↑ → ↓ ←</kbd><p>The four cardinals. Hold two at once for a diagonal, the way a real stick works.</p></div>
       <div class="kmrow"><kbd>Space</kbd><p>Latch the chord so your hands are free to change key and hear it slide.</p></div>
       <div class="kmrow"><kbd>G</kbd><p>Toggle slide. <kbd style="padding:1px 5px">Esc</kbd> recentres the knob.</p></div>
+      <div class="kmrow"><kbd>V</kbd><p>Cycle the voicing — root position, first inversion, second inversion. <kbd style="padding:1px 5px">O</kbd> shifts the octave.</p></div>
       <div class="kmrow"><kbd>R</kbd><p>Record. Starts the loop if it isn't running, and commits the layer when you press it again.</p></div>
       <div class="kmrow"><kbd>Enter</kbd><p>Start or stop the loop. <kbd style="padding:1px 5px">Backspace</kbd> deletes the last layer.</p></div>
     </div>
@@ -315,6 +321,13 @@ const QNAME={'0,4,7':'','0,3,7':'m','0,3,6':'dim','0,4,8':'aug','0,5,7':'sus4','
  '0,3,6,9,14':'dim9','0,4,8,10,14':'9♯5','0,4,8,11,14':'maj9♯5'};
 function chordName(c){const q=QNAME[c.iv.join(',')];return NOTES[c.root]+(q===undefined?'?':q);}
 function chordMidi(c){return c.iv.map(i=>48+c.root+i);}
+/* Chord identity and voicing stay separate: identity decides the notes,
+   this decides where they sit. inv 0/1/2, oct -1/0/+1. */
+function voiced(c,inv,oct){
+  const m=c.iv.map(i=>48+c.root+i+12*(oct||0));
+  for(let k=0;k<(inv||0);k++)m.push(m.shift()+12);
+  return m.sort((a,b)=>a-b);
+}
 function qualityOf(k,sc,d){const c=buildChord(k,sc,d,'base');
   if(c.iv[1]===3&&c.iv[2]===6)return 'dim';if(c.iv[1]===4&&c.iv[2]===8)return 'aug';return c.iv[1]===3?'min':'maj';}
 function degreeRoman(k,sc,d){const q=qualityOf(k,sc,d);let r=ROMAN[d];
@@ -331,8 +344,14 @@ const SOUNDS={
  mallet:{name:'Mallet',t:['sine','sine','sine'],            p:[[1,1],[1,0],[1,0]],       det:[0,0,0], fm:{ratio:4,idx:3.4,dec:.10},  cut:6000,ce:.22,q:.4, a:.002,d:.5, s:.02,r:.50,lvl:.28,wet:.35,oct:0},
  sub   :{name:'Sub',   t:['sine','sawtooth','sine'],        p:[[1,.8],[1,.22],[1,0]],    det:[0,4,0], fm:null,                       cut:620, ce:.38,q:.9, a:.012,d:.6, s:.50,r:.42,lvl:.34,wet:.08,oct:-12}};
 const POOL=5;
-let AC=null,dry=null,wet=null,voices=[];
+let AC=null,dry=null,wet=null,voices=[],rvbGain=null,dlyGain=null;
 function mtof(m){return 440*Math.pow(2,(m-69)/12);}
+function makeIR(sec,decay){
+  const rate=AC.sampleRate,len=Math.max(1,Math.floor(rate*sec)),buf=AC.createBuffer(2,len,rate);
+  for(let ch=0;ch<2;ch++){const d=buf.getChannelData(ch);
+    for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,decay);}
+  return buf;
+}
 function ensureAudio(){
   if(AC){if(AC.state!=='running')AC.resume();return;}
   const Ctx=window.AudioContext||window.webkitAudioContext;if(!Ctx)return;
@@ -344,8 +363,11 @@ function ensureAudio(){
   const dl=AC.createDelay(1);dl.delayTime.value=.3;
   const fb=AC.createGain();fb.gain.value=.34;
   const lp=AC.createBiquadFilter();lp.type='lowpass';lp.frequency.value=2200;
-  const sl=AC.createGain();sl.gain.value=.34;
+  const sl=AC.createGain();sl.gain.value=S.delay*.6;dlyGain=sl;
   wet.connect(dl);dl.connect(lp);lp.connect(fb);fb.connect(dl);lp.connect(sl);sl.connect(master);
+  const rv=AC.createConvolver();rv.buffer=makeIR(2.2,2.6);
+  rvbGain=AC.createGain();rvbGain.gain.value=S.reverb*.9;
+  wet.connect(rv);rv.connect(rvbGain);rvbGain.connect(master);
   for(let i=0;i<POOL;i++)voices.push(buildVoice());
   const el=document.getElementById('apill');el.classList.add('live');
   document.getElementById('atext').textContent=POOL+' voices · '+Math.round((AC.baseLatency||.003)*1000)+' ms';
@@ -427,7 +449,7 @@ function releaseAll(){if(!AC)return;const T=SOUNDS[S.sound];voices.forEach(v=>{i
 </script>
 <script>
 /* ================= state + UI ================= */
-const S={key:0,scale:'major',sound:'glass',detent:0,deg:null,slide:true,glide:160,hold:false};
+const S={key:0,scale:'major',sound:'glass',detent:0,deg:null,slide:true,glide:160,hold:false,inv:0,oct:0,reverb:.45,delay:.34};
 const el=id=>document.getElementById(id);
 const stage=el('stage'),module_=el('module'),knob=el('knob'),knobrot=el('knobrot'),
       arcEl=el('arc'),dotsG=el('dots'),chordEl=el('chord'),subEl=el('sub'),padsEl=el('pads');
@@ -487,6 +509,8 @@ function sounding(){return AC?voices.some(v=>v.on):false;}
 for(let d=0;d<7;d++){
   const b=document.createElement('button');b.className='pad';b.dataset.d=d;b.type='button';
   b.style.setProperty('--c',HUES[d]);
+  b.setAttribute('aria-pressed','false');
+  b.setAttribute('aria-label','Degree '+(d+1));
   b.innerHTML='<span class="n">'+(d+1)+'</span><span class="r"></span>';
   padsEl.appendChild(b);
 }
@@ -501,11 +525,11 @@ function reflow(){
   const c=buildChord(S.key,S.scale,S.deg,DETENTS[S.detent].id);
   chordEl.textContent=chordName(c);
   subEl.textContent=degreeRoman(S.key,S.scale,S.deg)+' · '+DETENTS[S.detent].name;
-  applyChord(chordMidi(c));
+  applyChord(voiced(c,S.inv,S.oct));
   renderKnob();
 }
 function retrigger(){if(S.deg!==null){const c=buildChord(S.key,S.scale,S.deg,DETENTS[S.detent].id);
-  if(AC)voices.forEach(v=>v.on=false);applyChord(chordMidi(c));}}
+  if(AC)voices.forEach(v=>v.on=false);applyChord(voiced(c,S.inv,S.oct));}}
 function stopAll(){
   releaseAll();S.deg=null;
   padsEl.querySelectorAll('.pad').forEach(p=>p.dataset.on='0');
@@ -662,7 +686,7 @@ function schedulePass(t0){
     ly.events.forEach(ev=>{
       const w=t0+ev.t;if(w<AC.currentTime-.02)return;
       const c=buildChord(S.key,S.scale,ev.deg,DETENTS[ev.det].id);
-      chordMidi(c).forEach(m=>transientNote(m,ly.sound,w,ev.dur));
+      voiced(c,S.inv,S.oct).forEach(m=>transientNote(m,ly.sound,w,ev.dur));
       setTimeout(()=>fire(ly),Math.max(0,(w-AC.currentTime)*1000));
     });
   });
@@ -792,7 +816,8 @@ function un36(s){let n=0;for(let i=0;i<s.length;i++){const v=B36.indexOf(s[i]);i
 /* Whole arrangement as one URL-safe token. Events are a fixed 7 chars each:
    degree, detent, start in ms (3), length in centiseconds (2). */
 function packLoop(st){
-  let t='1'+b36(st.key,1)+b36(st.scale,1)+b36(st.bpm,2)+b36(st.bars,1)+(st.q?'1':'0');
+  let t='2'+b36(st.key,1)+b36(st.scale,1)+b36(st.bpm,2)+b36(st.bars,1)+(st.q?'1':'0')
+    +b36(st.inv,1)+b36(st.oct+1,1)+b36(Math.round(st.rev*35),1)+b36(Math.round(st.dly*35),1);
   st.layers.forEach(ly=>{
     t+='-'+b36(ly.sound,1)+(ly.muted?'1':'0');
     ly.events.forEach(ev=>{t+=b36(ev.deg,1)+b36(ev.det,1)
@@ -805,10 +830,16 @@ function unpackLoop(tok){
   tok=tok.trim().replace(/^#/,'');
   const parts=tok.split('-');
   const h=parts[0];
-  if(!h||h.length!==7||h[0]!=='1')return null;
+  if(!h||(h[0]!=='1'&&h[0]!=='2'))return null;
+  if(h[0]==='1'?h.length!==7:h.length!==11)return null;
   const key=un36(h[1]),scale=un36(h[2]),bpm=un36(h.slice(3,5)),bars=un36(h[5]);
   if([key,scale,bpm,bars].some(isNaN))return null;
   if(key>11||scale>=SCALEIDS.length||bpm<40||bpm>200||[2,4,8].indexOf(bars)<0)return null;
+  let inv=0,oct=0,rev=.45,dly=.34;              /* v1 tokens predate these */
+  if(h[0]==='2'){
+    inv=un36(h[7]);oct=un36(h[8])-1;rev=un36(h[9])/35;dly=un36(h[10])/35;
+    if([inv,oct,rev,dly].some(isNaN)||inv>2||oct<-1||oct>1||rev>1||dly>1)return null;
+  }
   const layers=[];
   for(let i=1;i<parts.length;i++){
     const c=parts[i];if(c.length<2||(c.length-2)%7)return null;
@@ -823,10 +854,11 @@ function unpackLoop(tok){
     layers.push({sound,muted:c[1]==='1',events});
   }
   if(layers.length>4)return null;
-  return {key,scale,bpm,bars,q:h[6]==='1',layers};
+  return {key,scale,bpm,bars,q:h[6]==='1',inv,oct,rev,dly,layers};
 }
 function currentToken(){
   return packLoop({key:S.key,scale:SCALEIDS.indexOf(S.scale),bpm:LP.bpm,bars:LP.bars,q:LP.q,
+    inv:S.inv,oct:S.oct,rev:S.reverb,dly:S.delay,
     layers:LP.layers.map(ly=>({sound:SOUNDIDS.indexOf(ly.sound),muted:ly.muted,events:ly.events}))});
 }
 function restore(d){
@@ -834,6 +866,9 @@ function restore(d){
   loopStop();
   S.key=d.key;S.scale=SCALEIDS[d.scale];
   LP.bpm=d.bpm;LP.bars=d.bars;LP.q=d.q;
+  S.inv=d.inv;S.oct=d.oct;S.reverb=d.rev;S.delay=d.dly;
+  el('rvb').value=Math.round(S.reverb*100);el('dly').value=Math.round(S.delay*100);
+  renderVoicing();applyFx();
   LP.layers=d.layers.map((ly,i)=>({sound:SOUNDIDS[ly.sound],muted:ly.muted,
     events:ly.events.slice(),hue:LHUES[i%LHUES.length],el:null}));
   LP.cur=null;LP.held=null;
@@ -931,4 +966,44 @@ el('scalesel').onchange=()=>{_s();save();};
 document.addEventListener('click',e=>{if(e.target.closest('.lbtn'))save();});
 
 load();
+</script>
+<script>
+/* ================= voicing, octave, effects ================= */
+const INVNAME=['Root','1st','2nd'];
+function applyFx(){
+  if(rvbGain)rvbGain.gain.value=S.reverb*.9;
+  if(dlyGain)dlyGain.gain.value=S.delay*.6;
+}
+function renderVoicing(){
+  el('invbtn').textContent=INVNAME[S.inv];
+  el('invbtn').setAttribute('aria-pressed',S.inv?'true':'false');
+  el('octbtn').textContent='Oct '+(S.oct>0?'+1':S.oct<0?'−1':'0');
+  el('octbtn').setAttribute('aria-pressed',S.oct?'true':'false');
+}
+function cycleInv(){S.inv=(S.inv+1)%3;renderVoicing();reflow();save();}
+function cycleOct(){S.oct=S.oct>=1?-1:S.oct+1;renderVoicing();reflow();save();}
+el('invbtn').onclick=cycleInv;
+el('octbtn').onclick=cycleOct;
+el('rvb').oninput=e=>{S.reverb=+e.target.value/100;applyFx();save();};
+el('dly').oninput=e=>{S.delay=+e.target.value/100;applyFx();save();};
+addEventListener('keydown',ev=>{
+  const tag=ev.target.tagName;if(tag==='SELECT'||tag==='INPUT')return;
+  const k=ev.key.toLowerCase();
+  if(k==='v'){ev.preventDefault();cycleInv();}
+  else if(k==='o'){ev.preventDefault();cycleOct();}
+});
+
+/* keep the assistive layer in step with the visual one */
+const _renderKnob=renderKnob;
+renderKnob=function(){
+  _renderKnob();
+  knob.setAttribute('aria-valuenow',String(S.detent));
+  knob.setAttribute('aria-valuetext',DETENTS[S.detent].name);
+  padsEl.querySelectorAll('.pad').forEach(p=>
+    p.setAttribute('aria-pressed',p.dataset.on==='1'?'true':'false'));
+};
+const _ensureAudio=ensureAudio;
+ensureAudio=function(){_ensureAudio();applyFx();};
+
+renderVoicing();renderKnob();
 </script>
