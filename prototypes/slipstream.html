@@ -154,6 +154,15 @@ input[type=range]{accent-color:var(--hue);width:110px;vertical-align:middle}
 .empty{font-size:13.5px;color:var(--fg-faint);font-weight:300;padding:15px 0;border-top:1px solid var(--line)}
 .empty b{color:var(--fg-dim);font-weight:500}
 
+.share{margin-top:12px;padding:15px;border:1px solid var(--line);border-radius:14px;background:#0A0E18;display:flex;flex-direction:column;gap:9px}
+.sharerow{display:flex;gap:8px}
+.share input{flex:1;min-width:0;background:#0D121F;border:1px solid var(--line);border-radius:9px;padding:8px 11px;font-family:var(--mono);font-size:11.5px;color:var(--fg);text-overflow:ellipsis}
+.share input::placeholder{color:var(--fg-faint)}
+.sharenote{margin:0;font-size:12.5px;color:var(--fg-faint);font-weight:300}
+.sharenote b{color:var(--fg-dim);font-weight:500}
+.savedot{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--hue);opacity:0;transition:opacity .3s;margin-left:auto}
+.savedot.on{opacity:.85}
+
 @media (max-width:640px){
   .pads{grid-template-columns:repeat(4,1fr)}
   .cluster{grid-template-columns:repeat(3,56px)}
@@ -211,6 +220,20 @@ input[type=range]{accent-color:var(--hue);width:110px;vertical-align:middle}
     <div class="seg"><span class="lab">Bars</span><select id="barsel"><option>2</option><option selected>4</option><option>8</option></select></div>
     <button class="tog" id="qbtn" aria-pressed="false">Quantize</button>
     <button class="tog" id="clearbtn">Clear</button>
+    <select id="presetsel" aria-label="Load a preset"><option value="">Presets…</option></select>
+    <button class="tog" id="sharebtn" aria-pressed="false">Share</button>
+    <span class="savedot" id="savedot">saved</span>
+  </div>
+  <div class="share" id="sharepanel" hidden>
+    <div class="sharerow">
+      <input id="shareurl" readonly aria-label="Link to this arrangement">
+      <button class="lbtn" id="copybtn">Copy</button>
+    </div>
+    <div class="sharerow">
+      <input id="loadin" placeholder="paste a code here to load an arrangement" aria-label="Paste a code to load">
+      <button class="lbtn" id="loadbtn">Load</button>
+    </div>
+    <p class="sharenote">Your loops save to <b>this browser</b> on their own and come back when you return. The code above carries the whole arrangement — key, scale, tempo, and every layer — so anyone who opens it hears what you built.</p>
   </div>
   <div class="layers" id="layers"></div>
   <div class="empty" id="loopempty">Hit <b>record</b> and play. The loop runs for four bars and wraps. Record again to stack another layer on top — each one keeps whichever voice was selected when you played it, so you can put <b>Sub</b> under <b>Glass</b>. Layers store scale degrees rather than notes, so changing the key transposes everything at once.</div>
@@ -757,4 +780,155 @@ addEventListener('keydown',ev=>{
 });
 
 drawTicks();renderLayers();
+</script>
+<script>
+/* ================= save, share, presets ================= */
+const SCALEIDS=Object.keys(SCALES),SOUNDIDS=Object.keys(SOUNDS);
+const B36='0123456789abcdefghijklmnopqrstuvwxyz';
+function b36(n,w){n=Math.max(0,Math.round(n));let s='';
+  while(s.length<w){s=B36[n%36]+s;n=Math.floor(n/36);}return s.slice(-w);}
+function un36(s){let n=0;for(let i=0;i<s.length;i++){const v=B36.indexOf(s[i]);if(v<0)return NaN;n=n*36+v;}return n;}
+
+/* Whole arrangement as one URL-safe token. Events are a fixed 7 chars each:
+   degree, detent, start in ms (3), length in centiseconds (2). */
+function packLoop(st){
+  let t='1'+b36(st.key,1)+b36(st.scale,1)+b36(st.bpm,2)+b36(st.bars,1)+(st.q?'1':'0');
+  st.layers.forEach(ly=>{
+    t+='-'+b36(ly.sound,1)+(ly.muted?'1':'0');
+    ly.events.forEach(ev=>{t+=b36(ev.deg,1)+b36(ev.det,1)
+      +b36(Math.min(46655,ev.t*1000),3)+b36(Math.min(1295,ev.dur*100),2);});
+  });
+  return t;
+}
+function unpackLoop(tok){
+  if(typeof tok!=='string')return null;
+  tok=tok.trim().replace(/^#/,'');
+  const parts=tok.split('-');
+  const h=parts[0];
+  if(!h||h.length!==7||h[0]!=='1')return null;
+  const key=un36(h[1]),scale=un36(h[2]),bpm=un36(h.slice(3,5)),bars=un36(h[5]);
+  if([key,scale,bpm,bars].some(isNaN))return null;
+  if(key>11||scale>=SCALEIDS.length||bpm<40||bpm>200||[2,4,8].indexOf(bars)<0)return null;
+  const layers=[];
+  for(let i=1;i<parts.length;i++){
+    const c=parts[i];if(c.length<2||(c.length-2)%7)return null;
+    const sound=un36(c[0]);if(isNaN(sound)||sound>=SOUNDIDS.length)return null;
+    const events=[];
+    for(let j=2;j<c.length;j+=7){
+      const deg=un36(c[j]),det=un36(c[j+1]),
+            t=un36(c.slice(j+2,j+5))/1000,dur=un36(c.slice(j+5,j+7))/100;
+      if([deg,det,t,dur].some(isNaN)||deg>6||det>11)return null;
+      events.push({deg,det,t,dur});
+    }
+    layers.push({sound,muted:c[1]==='1',events});
+  }
+  if(layers.length>4)return null;
+  return {key,scale,bpm,bars,q:h[6]==='1',layers};
+}
+function currentToken(){
+  return packLoop({key:S.key,scale:SCALEIDS.indexOf(S.scale),bpm:LP.bpm,bars:LP.bars,q:LP.q,
+    layers:LP.layers.map(ly=>({sound:SOUNDIDS.indexOf(ly.sound),muted:ly.muted,events:ly.events}))});
+}
+function restore(d){
+  if(!d)return false;
+  loopStop();
+  S.key=d.key;S.scale=SCALEIDS[d.scale];
+  LP.bpm=d.bpm;LP.bars=d.bars;LP.q=d.q;
+  LP.layers=d.layers.map((ly,i)=>({sound:SOUNDIDS[ly.sound],muted:ly.muted,
+    events:ly.events.slice(),hue:LHUES[i%LHUES.length],el:null}));
+  LP.cur=null;LP.held=null;
+  el('keysel').value=S.key;el('scalesel').value=S.scale;
+  el('bpm').value=LP.bpm;el('bpmv').textContent=LP.bpm;
+  el('barsel').value=LP.bars;
+  el('qbtn').setAttribute('aria-pressed',LP.q?'true':'false');
+  labelPads();drawTicks();renderLayers();renderKnob();
+  return true;
+}
+
+/* ---- autosave to this browser ---- */
+const SKEY='slipstream.v1';
+let saveFlash=null;
+function save(){
+  try{localStorage.setItem(SKEY,currentToken());}catch(e){return;}
+  const d=el('savedot');d.classList.add('on');
+  clearTimeout(saveFlash);saveFlash=setTimeout(()=>d.classList.remove('on'),1100);
+  if(el('sharepanel').hidden===false)refreshShare();
+}
+function load(){
+  let tok=null;
+  try{const h=(location.hash||'').replace(/^#/,'');if(h.length>5)tok=h;}catch(e){}
+  if(!tok){try{tok=localStorage.getItem(SKEY);}catch(e){}}
+  const d=unpackLoop(tok);
+  if(d&&d.layers.length)return restore(d);
+  return false;
+}
+
+/* ---- share ---- */
+function shareLink(){
+  const tok=currentToken();
+  try{
+    if(location.protocol==='http:'||location.protocol==='https:')
+      return location.origin+location.pathname+'#'+tok;
+  }catch(e){}
+  return tok;
+}
+function refreshShare(){el('shareurl').value=shareLink();}
+el('sharebtn').onclick=e=>{
+  const p=el('sharepanel'),open=p.hidden;
+  p.hidden=!open;e.currentTarget.setAttribute('aria-pressed',open?'true':'false');
+  if(open)refreshShare();
+};
+el('copybtn').onclick=()=>{
+  const i=el('shareurl'),b=el('copybtn');
+  const done=ok=>{b.textContent=ok?'Copied':'Select it';setTimeout(()=>b.textContent='Copy',1600);};
+  try{navigator.clipboard.writeText(i.value).then(()=>done(true),()=>{i.select();done(false);});}
+  catch(e){i.select();done(false);}
+};
+el('loadbtn').onclick=()=>{
+  const b=el('loadbtn'),d=unpackLoop(el('loadin').value);
+  if(!d){b.textContent='Not a code';setTimeout(()=>b.textContent='Load',1600);return;}
+  restore(d);save();el('loadin').value='';
+  b.textContent='Loaded';setTimeout(()=>b.textContent='Load',1600);
+};
+
+/* ---- presets ---- */
+const PRESETS=[
+ {n:'I – V – vi – IV',scale:'major',ch:[[0,'base'],[4,'base'],[5,'base'],[3,'add7']]},
+ {n:'ii – V – I',       scale:'major',ch:[[1,'add7'],[4,'dom7'],[0,'add7'],[0,'add9']]},
+ {n:'vi – IV – I – V',scale:'major',ch:[[5,'base'],[3,'add7'],[0,'base'],[4,'dom7']]},
+ {n:'i – VII – VI – v',scale:'minor',ch:[[0,'base'],[6,'base'],[5,'add7'],[4,'sus4']]}];
+PRESETS.forEach((p,i)=>el('presetsel').add(new Option(p.n,String(i))));
+el('presetsel').onchange=e=>{
+  const p=PRESETS[+e.target.value];e.target.value='';
+  if(!p)return;
+  ensureAudio();
+  S.scale=p.scale;el('scalesel').value=p.scale;labelPads();
+  const L=loopLen(),step=L/p.ch.length;
+  const layer={sound:S.sound,muted:false,hue:LHUES[LP.layers.length%LHUES.length],el:null,
+    events:p.ch.map((c,i)=>({deg:c[0],det:DETENTS.findIndex(d=>d.id===c[1]),t:i*step,dur:step*.96}))};
+  if(LP.layers.length>=LP.max)LP.layers.pop();
+  LP.layers.push(layer);
+  renderLayers();save();
+  if(!LP.running)loopStart();
+};
+
+/* ---- save on every change that matters ---- */
+const _recOff=recOff,_recToggle=recToggle;
+recOff=function(){_recOff();save();};
+recToggle=function(){_recToggle();save();};
+el('recbtn').onclick=recToggle;
+const _clear=el('clearbtn').onclick;
+el('clearbtn').onclick=()=>{_clear();save();};
+const _q=el('qbtn').onclick;
+el('qbtn').onclick=e=>{_q(e);save();};
+const _bpm=el('bpm').oninput;
+el('bpm').oninput=e=>{_bpm(e);save();};
+const _bars=el('barsel').onchange;
+el('barsel').onchange=e=>{_bars(e);save();};
+const _k=el('keysel').onchange,_s=el('scalesel').onchange;
+el('keysel').onchange=()=>{_k();save();};
+el('scalesel').onchange=()=>{_s();save();};
+document.addEventListener('click',e=>{if(e.target.closest('.lbtn'))save();});
+
+load();
 </script>

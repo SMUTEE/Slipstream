@@ -84,6 +84,34 @@ five-voice glide pool so slide keeps working; recorded layers use scheduled one-
 against `AudioContext.currentTime`, capped at 26 concurrent. That scheduler is also what the
 12-pulse rhythm engine will eventually run on.
 
+## Saving and sharing
+
+Loops save to your browser automatically and come back when you return.
+
+**Share** turns the whole arrangement — key, scale, tempo, bar count and every layer — into one
+URL-safe token. A typical four-chord loop is 38 characters; four full layers of 32 chords each
+is 824, which fits a URL comfortably.
+
+```
+1002o40-00000006o401xg6o503uw6o335sc6o     C – G – Am – Fmaj7, 96 bpm, 4 bars
+```
+
+The header is version, key, scale, tempo, bars and quantize. Each chord after it is a fixed
+seven characters: degree, detent, start in milliseconds, length in centiseconds. Decoding
+validates every field and refuses anything malformed rather than half-loading it.
+
+Where the host passes a URL fragment through, the link restores the arrangement on open. The
+paste-a-code box works everywhere regardless.
+
+Because layers hold scale degrees rather than notes, a shared arrangement is transposable by
+whoever opens it — they can move it to their own key without losing what you wrote.
+
+## Presets
+
+Four progressions that load straight into a layer and start playing: `I–V–vi–IV`, `ii–V–I`,
+`vi–IV–I–V`, and a minor `i–VII–VI–v`. They set the scale they need, and they are ordinary
+layers once loaded, so you can mute them, delete them or stack your own on top.
+
 ## Voices
 
 Eight, built on three oscillators with independent harmonic multipliers plus one FM operator,
@@ -107,12 +135,16 @@ also carries a fourteen-point review of the original product spec.
 ## State of play
 
 Working: 12 keys, 4 scales, 7 degrees, 12 detents, 8 voices, portamento, knob and touch
-gestures, full keyboard control, and four-layer loop recording on a lookahead scheduler. The
-chord engine is verified across all 4,032 combinations of key × scale × degree × detent.
+gestures, full keyboard control, four-layer loop recording on a lookahead scheduler, presets,
+autosave and shareable arrangements.
 
-Not built yet: per-pad sound assignment, a progression strip, save and share URLs, MIDI out.
-Loops currently live only in memory — they do not survive a reload yet, which is the next
-thing worth fixing since the state is already serialisable.
+Verified: the chord engine across all 4,032 combinations of key × scale × degree × detent, and
+the share encoder across 4,000 randomised arrangements with zero round-trip failures.
+
+Not built yet: editing a recorded layer (right now a layer is opaque and your only fix is to
+replay it), per-pad sound assignment, and MIDI out. Per-pad sound is deliberately parked —
+layers already give you per-voice separation, and a sound picker on every pad costs screen
+space permanently.
 
 ## Running it
 
