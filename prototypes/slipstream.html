@@ -198,6 +198,8 @@ input[type=range]::-moz-range-thumb{width:15px;height:15px;border:0;border-radiu
 .lbtn{background:transparent;border:1px solid var(--line);border-radius:7px;padding:4px 9px;font-family:var(--mono);font-size:10px;letter-spacing:.08em;cursor:pointer;color:var(--fg-dim);transition:all .16s;flex:0 0 auto}
 .lbtn:hover{border-color:var(--hue);color:var(--fg)}
 .lbtn[aria-pressed="true"]{background:var(--hue);color:var(--void);border-color:var(--hue)}
+.loopnote{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;color:#F0A868}
+.loopnote[hidden]{display:none}
 .empty{font-size:13.5px;color:var(--fg-faint);font-weight:300}
 .empty[hidden]{display:none}
 .empty b{color:var(--fg-dim);font-weight:500}
@@ -283,8 +285,9 @@ input[type=range]::-moz-range-thumb{width:15px;height:15px;border:0;border-radiu
       <div class="tempo"><span class="tl">BPM</span><input type="range" id="bpm" min="60" max="160" step="1" value="96" aria-label="Tempo"><span class="tv" id="bpmv">96</span></div>
     </div>
     <div class="tsecondary">
-      <label class="minifield"><span>Preset</span><select id="presetsel" aria-label="Load a preset"><option value="">none</option></select></label>
+      <label class="minifield"><span>Presets</span><select id="presetsel" aria-label="Load a preset"><option value="">load…</option></select></label>
       <label class="minifield"><span>Bars</span><select id="barsel"><option>2</option><option selected>4</option><option>8</option></select></label>
+      <button class="chip sm" id="clickbtn" aria-pressed="true">Click</button>
       <button class="chip sm" id="qbtn" aria-pressed="false">Quantize</button>
       <button class="chip sm" id="clearbtn">Clear</button>
       <button class="chip sm" id="sharebtn" aria-pressed="false" aria-controls="sharepanel">Share</button>
@@ -301,8 +304,9 @@ input[type=range]::-moz-range-thumb{width:15px;height:15px;border:0;border-radiu
     </div>
     <p class="sharenote">Your loops save to <b>this browser</b> on their own and come back when you return. The code above carries the whole arrangement — key, scale, tempo, and every layer — so anyone who opens it hears what you built.</p>
   </div>
+    <div class="loopnote" id="loopnote" hidden></div>
     <div class="layers" id="layers"></div>
-    <div class="empty" id="loopempty">Hit <b>record</b> and play. The loop runs for four bars and wraps. Record again to stack another layer on top — each one keeps whichever voice was selected when you played it, so you can put <b>Sub</b> under <b>Glass</b>. Layers store scale degrees rather than notes, so changing the key transposes everything at once.</div>
+    <div class="empty" id="loopempty"></div>
   </div>
 </section>
 
@@ -511,7 +515,7 @@ function releaseAll(){if(!AC)return;const T=SOUNDS[S.sound];voices.forEach(v=>{i
 </script>
 <script>
 /* ================= state + UI ================= */
-const S={key:0,scale:'major',sound:'glass',detent:0,deg:null,slide:true,glide:160,hold:false,inv:0,oct:0,reverb:.45,delay:.34};
+const S={key:0,scale:'major',sound:'glass',detent:0,deg:null,slide:true,glide:160,hold:false,inv:0,oct:0,reverb:.45,delay:.34,click:true};
 const el=id=>document.getElementById(id);
 const stage=el('stage'),module_=el('module'),knob=el('knob'),knobrot=el('knobrot'),
       arcEl=el('arc'),dotsG=el('dots'),chordEl=el('chord'),subEl=el('sub'),padsEl=el('pads');
@@ -597,7 +601,7 @@ function stopAll(){
   padsEl.querySelectorAll('.pad').forEach(p=>p.dataset.on='0');
   chordEl.textContent='—';subEl.textContent='press 1–7';renderKnob();
 }
-function letGo(){ if(S.hold)return; stopAll(); }
+function letGo(){ recOff(); if(S.hold)return; stopAll(); }
 
 let padG=null;
 padsEl.addEventListener('pointerdown',e=>{
@@ -681,7 +685,10 @@ labelPads();renderKnob();
 const LHUES=['#22D3EE','#4C9BFF','#8560F0','#F07BC8'];
 const LP={running:false,rec:false,bpm:96,bars:4,q:false,layers:[],cur:null,
           origin:0,passN:0,timer:null,raf:null,held:null,max:4};
-function loopLen(){return LP.bars*4*60/LP.bpm;}
+function beatLen(){return 60/LP.bpm;}
+function loopBeats(){return LP.bars*4;}
+function loopLen(){return loopBeats()*beatLen();}
+function loopPosBeats(){return loopPos()/beatLen();}
 function loopPos(){if(!LP.running||!AC)return 0;const L=loopLen();return ((AC.currentTime-LP.origin)%L+L)%L;}
 
 /* one-shot voice for scheduled layer playback — the live pool keeps its glide */
@@ -721,6 +728,16 @@ function transientNote(midi,sid,when,dur){
   o1.onended=()=>{activeT--;try{amp.disconnect();send.disconnect();}catch(e){}};
 }
 
+function click(when,accent){
+  if(!AC)return;
+  const o=AC.createOscillator(),g=AC.createGain();
+  o.type='triangle';o.frequency.value=accent?1600:1050;
+  g.gain.setValueAtTime(.0001,when);
+  g.gain.linearRampToValueAtTime(accent?.16:.085,when+.002);
+  g.gain.exponentialRampToValueAtTime(.0001,when+.06);
+  o.connect(g);g.connect(dry);o.start(when);o.stop(when+.09);
+}
+
 /* ---- transport ---- */
 function loopStart(){
   ensureAudio();if(!AC||LP.running)return;
@@ -743,12 +760,21 @@ function loopTick(){
   while(LP.origin+LP.passN*L<AC.currentTime+.25){schedulePass(LP.origin+LP.passN*L,L);LP.passN++;}
 }
 function schedulePass(t0){
+  if(S.click){
+    const bl=beatLen();
+    for(let b=0;b<loopBeats();b++){
+      const w=t0+b*bl;
+      if(w>=AC.currentTime-.02)click(w,b%4===0);
+    }
+  }
   LP.layers.forEach(ly=>{
     if(ly.muted||(ly===LP.cur&&LP.rec))return;
     ly.events.forEach(ev=>{
-      const w=t0+ev.t;if(w<AC.currentTime-.02)return;
+      if(ev.t>=loopBeats())return;                  /* trimmed by a shorter bar count */
+      const bl=beatLen(),w=t0+ev.t*bl;
+      if(w<AC.currentTime-.02)return;
       const c=buildChord(S.key,S.scale,ev.deg,DETENTS[ev.det].id);
-      voiced(c,S.inv,S.oct).forEach(m=>transientNote(m,ly.sound,w,ev.dur));
+      voiced(c,S.inv,S.oct).forEach(m=>transientNote(m,ly.sound,w,ev.dur*bl));
       setTimeout(()=>fire(ly),Math.max(0,(w-AC.currentTime)*1000));
     });
   });
@@ -794,16 +820,15 @@ function recToggle(){
 function recOn(d){
   if(!LP.rec||!LP.cur||!AC)return;
   if(LP.held)recOff();
-  let t=loopPos();
-  if(LP.q){const g=60/LP.bpm/2,L=loopLen();t=Math.round(t/g)*g;if(t>=L)t-=L;}
+  let t=loopPosBeats();
+  if(LP.q){t=Math.round(t*2)/2;if(t>=loopBeats())t-=loopBeats();}
   LP.held={t,deg:d,det:S.detent,start:AC.currentTime};
   LP.cur.sound=S.sound;
 }
 function recOff(){
   if(!LP.held||!LP.cur||!AC)return;
   const h=LP.held;LP.held=null;
-  const L=loopLen();
-  const dur=Math.max(.14,Math.min(AC.currentTime-h.start,L*.98));
+  const dur=Math.max(.12,Math.min((AC.currentTime-h.start)/beatLen(),loopBeats()*.98));
   LP.cur.events.push({t:h.t,deg:h.deg,det:h.det,dur});
   LP.cur.events.sort((a,b)=>a.t-b.t);
   renderLayers();
@@ -835,14 +860,25 @@ function renderLayers(){
     r.appendChild(m);r.appendChild(x);
     ly.el=r;box.appendChild(r);
   });
+  el('loopempty').innerHTML='Hit <b>record</b> and play along to the click. The loop runs for '
+    +LP.bars+' bars and wraps. Record again to stack another layer on top \u2014 each keeps whichever '
+    +'voice was selected when you played it, so you can put <b>Sub</b> under <b>Glass</b>. Layers hold '
+    +'scale degrees and beats rather than notes and seconds, so changing the key transposes everything '
+    +'and changing the tempo moves it all together.';
   el('loopempty').hidden=LP.layers.length>0;
-  el('recbtn').disabled=(!LP.rec&&LP.layers.length>=LP.max);
+  const full=LP.layers.length>=LP.max;
+  el('recbtn').disabled=(!LP.rec&&full);
+  el('recbtn').title=full?'Four layers is the limit — delete one to record another':'Record';
+  const note=el('loopnote');
+  note.hidden=!(full&&!LP.rec);
+  note.textContent='Four layers is the limit. Delete one to record another.';
 }
 
 /* ---- wiring ---- */
 el('recbtn').onclick=recToggle;
 el('runbtn').onclick=()=>{LP.running?loopStop():loopStart();};
 el('clearbtn').onclick=()=>{loopStop();LP.layers=[];LP.cur=null;LP.held=null;renderLayers();};
+el('clickbtn').onclick=e=>{S.click=!S.click;e.currentTarget.setAttribute('aria-pressed',S.click?'true':'false');save();};
 el('qbtn').onclick=e=>{LP.q=!LP.q;e.currentTarget.setAttribute('aria-pressed',LP.q?'true':'false');};
 el('bpm').oninput=e=>{LP.bpm=+e.target.value;el('bpmv').textContent=LP.bpm;resync();};
 el('barsel').onchange=e=>{LP.bars=+e.target.value;drawTicks();resync();};
@@ -878,7 +914,7 @@ function un36(s){let n=0;for(let i=0;i<s.length;i++){const v=B36.indexOf(s[i]);i
 /* Whole arrangement as one URL-safe token. Events are a fixed 7 chars each:
    degree, detent, start in ms (3), length in centiseconds (2). */
 function packLoop(st){
-  let t='2'+b36(st.key,1)+b36(st.scale,1)+b36(st.bpm,2)+b36(st.bars,1)+(st.q?'1':'0')
+  let t='3'+b36(st.key,1)+b36(st.scale,1)+b36(st.bpm,2)+b36(st.bars,1)+(st.q?'1':'0')
     +b36(st.inv,1)+b36(st.oct+1,1)+b36(Math.round(st.rev*35),1)+b36(Math.round(st.dly*35),1);
   st.layers.forEach(ly=>{
     t+='-'+b36(ly.sound,1)+(ly.muted?'1':'0');
@@ -892,13 +928,14 @@ function unpackLoop(tok){
   tok=tok.trim().replace(/^#/,'');
   const parts=tok.split('-');
   const h=parts[0];
-  if(!h||(h[0]!=='1'&&h[0]!=='2'))return null;
-  if(h[0]==='1'?h.length!==7:h.length!==11)return null;
+  const ver=h?h[0]:'';
+  if(!h||['1','2','3'].indexOf(ver)<0)return null;
+  if(ver==='1'?h.length!==7:h.length!==11)return null;
   const key=un36(h[1]),scale=un36(h[2]),bpm=un36(h.slice(3,5)),bars=un36(h[5]);
   if([key,scale,bpm,bars].some(isNaN))return null;
   if(key>11||scale>=SCALEIDS.length||bpm<40||bpm>200||[2,4,8].indexOf(bars)<0)return null;
   let inv=0,oct=0,rev=.45,dly=.34;              /* v1 tokens predate these */
-  if(h[0]==='2'){
+  if(ver!=='1'){
     inv=un36(h[7]);oct=un36(h[8])-1;rev=un36(h[9])/35;dly=un36(h[10])/35;
     if([inv,oct,rev,dly].some(isNaN)||inv>2||oct<-1||oct>1||rev>1||dly>1)return null;
   }
@@ -911,8 +948,9 @@ function unpackLoop(tok){
       const deg=un36(c[j]),det=un36(c[j+1]),
             t=un36(c.slice(j+2,j+5))/1000,dur=un36(c.slice(j+5,j+7))/100;
       if([deg,det,t,dur].some(isNaN)||deg>6||det>11)return null;
-      events.push({deg,det,t,dur});
+      events.push({deg,det,t,dur});   /* beats; v1 and v2 held seconds and are converted below */
     }
+    if(ver!=='3'){const perBeat=bpm/60;events.forEach(e=>{e.t*=perBeat;e.dur*=perBeat;});}
     layers.push({sound,muted:c[1]==='1',events});
   }
   if(layers.length>4)return null;
@@ -1000,7 +1038,7 @@ el('presetsel').onchange=e=>{
   if(!p)return;
   ensureAudio();
   S.scale=p.scale;el('scalesel').value=p.scale;labelPads();
-  const L=loopLen(),step=L/p.ch.length;
+  const step=loopBeats()/p.ch.length;
   const layer={sound:S.sound,muted:false,hue:LHUES[LP.layers.length%LHUES.length],el:null,
     events:p.ch.map((c,i)=>({deg:c[0],det:DETENTS.findIndex(d=>d.id===c[1]),t:i*step,dur:step*.96}))};
   if(LP.layers.length>=LP.max)LP.layers.pop();

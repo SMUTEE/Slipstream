@@ -88,6 +88,7 @@ ok('voicing never alters chord identity',
 
 /* ----------------------------------------------------------------- codec */
 group('share codec');
+/* Times are beats, not seconds: a loop keeps its musical shape at any tempo. */
 
 const rnd = n => Math.floor(Math.random() * n);
 let bad = 0, unsafe = 0, longest = 0;
@@ -101,8 +102,8 @@ for (let i = 0; i < 3000; i++) {
     const ev = [];
     for (let e = 0; e < rnd(33); e++) ev.push({
       deg: rnd(7), det: rnd(12),
-      t: Math.round(Math.random() * 31000) / 1000,
-      dur: Math.round(Math.random() * 1200) / 100
+      t: Math.round(Math.random() * 31000) / 1000,   // beats
+      dur: Math.round(Math.random() * 1200) / 100     // beats
     });
     st.layers.push({ sound: rnd(8), muted: rnd(2) === 1, events: ev });
   }
@@ -134,10 +135,21 @@ ok('malformed input is refused rather than half-loaded',
   junk.every(j => M.unpackLoop(j) === null),
   junk.filter(j => M.unpackLoop(j) !== null).map(j => JSON.stringify(j)).join(' '));
 
+ok('a fresh token declares version 3', M.packLoop({
+  key: 0, scale: 0, bpm: 96, bars: 4, q: false, inv: 0, oct: 0, rev: 0, dly: 0, layers: []
+})[0] === '3');
+
+/* An old token: I V vi IV at 0, 2.5, 5 and 7.5 SECONDS in a 10-second loop at 96 bpm.
+   In beats that is one chord per bar — 0, 4, 8, 12. */
 const v1 = M.unpackLoop('1002o40-00000006o401xg6o503uw6o335sc6o');
 ok('tokens shared before voicing existed still load', !!v1 && v1.layers[0].events.length === 4);
 ok('and they default to root position at the original octave',
   !!v1 && v1.inv === 0 && v1.oct === 0);
+ok('and their seconds are converted to beats on the way in',
+  !!v1 && v1.layers[0].events.map(e => e.t).join(',') === '0,4,8,12',
+  v1 && v1.layers[0].events.map(e => e.t).join(','));
+ok('so an old arrangement keeps its shape when the tempo changes',
+  !!v1 && v1.layers[0].events.every(e => e.t % 4 === 0));
 
 /* ---------------------------------------------------------------------- */
 console.log(`\n${pass} passed, ${fail} failed\n`);
