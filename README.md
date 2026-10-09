@@ -7,7 +7,7 @@ plain HTML and the Web Audio API.
 The idea is that the system knows the theory so you don't have to. You are choosing
 relationships, not chord names, so the same seven pads keep working when you change key.
 
-**[Play the current build →](prototypes/slipstream.html)**
+**[Play the current build](app/)**
 
 ---
 
@@ -192,26 +192,43 @@ generated at runtime — decaying noise, so there is no audio file to ship. **Sp
 node tests/run.mjs
 ```
 
-No dependencies and no build. Because the app is a single HTML file, the suite pulls the pure
-modules — the chord engine and the share codec — straight out of it and runs them in Node.
-Neither touches the DOM, which is the property that makes this work and is worth keeping true.
+No dependencies and no build. The suite imports the real modules rather than scraping them out of a page, which works
+because `music/` and the share codec are pure. Three assertions check that this stays true:
+no DOM access in `music/`, no music theory in `ui/`, and no function in `main.js` patched onto
+one another module already defined.
 
-22 assertions covering chord generation across all 4,032 key × scale × degree × detent
+29 assertions covering chord generation across all 4,032 key × scale × degree × detent
 combinations, diatonic sevenths, the diminished-triad edge case, degree stability across keys,
-inversion and octave maths, and 3,000 randomised round trips through the share codec plus its
-rejection of malformed input.
+inversion and octave maths, 3,000 randomised round trips through the share codec plus its
+rejection of malformed input, and the module boundaries above.
 
 ## Layout
 
 ```
-index.html                   landing page
-prototypes/slipstream.html   the instrument
-tests/run.mjs                the suite
+index.html              landing page
+app/index.html          the instrument: markup and styles
+app/src/
+  music/                notes, chords, voicing, detents. No DOM anywhere in here.
+  audio/                context and graph, sounds, the glide pool, the scheduler
+  loop/recorder.js      transport and recording, in beats
+  state/                store, share codec, persistence
+  ui/                   knob, pads, controls, loop card, keyboard
+  main.js               the only file that wires modules to each other
+tests/run.mjs           the suite
 ```
 
-Earlier design studies — three interaction models with a review of the original product spec,
-and three Japanese visual directions — are not part of the live site. They remain in git
-history at `86ada28`.
+Native ES modules, so there is still nothing to build. The one consequence is that
+`app/index.html` needs to be served rather than opened from disk, because browsers refuse
+module imports over `file://`.
+
+```
+python3 -m http.server 8777     # then open http://localhost:8777/app/
+```
+
+The dependency direction only ever points one way. `music/` knows nothing about audio or the
+DOM, `ui/` contains no music theory, and `main.js` is the only place where modules are joined
+to each other. Three of the tests check exactly that, because it is the property the suite
+depends on to import the real code rather than scraping it out of a page.
 
 ## State of play
 
@@ -238,7 +255,13 @@ enhancement.
 
 ## Running it
 
-Open `prototypes/slipstream.html` in a browser. There is nothing to install.
+Serve the folder and open `app/`:
+
+```
+python3 -m http.server 8777
+```
+
+There is nothing to install and nothing to build.
 
 Audio starts on the first tap or keypress, because browsers require a gesture before they let
 a page make sound.

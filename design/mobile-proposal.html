@@ -1,0 +1,306 @@
+<title>Slipstream Mobile</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;500;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: dark studio wall. Phone frames drawn to scale in a row, annotated, then the reasoning. */
+:root{
+  --void:#050609; --panel:#0C1019; --fg:#E9EEF8; --dim:#79839A; --faint:#434B5E;
+  --line:rgba(130,170,255,.10); --hue:#2E9BFF; --warn:#F0A868; --bad:#FF4D5E; --good:#49B49A;
+  --ui:"Manrope",system-ui,sans-serif; --mono:"JetBrains Mono",ui-monospace,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--void);color:var(--fg);font-family:var(--ui);font-weight:300;font-size:15px;line-height:1.65;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.wrap{max-width:1080px;margin:0 auto;padding-inline:20px;padding-block:0 80px}
+h1,h2,h3{margin:0;text-wrap:balance;font-weight:200;letter-spacing:-.02em}
+.lab{font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--faint)}
+
+header{padding-block:46px 30px;border-bottom:1px solid var(--line)}
+header h1{font-size:clamp(30px,5.6vw,46px)}
+header h1 b{font-weight:700;color:var(--hue)}
+header p{color:var(--dim);max-width:60ch;margin:14px 0 0;font-size:16px}
+
+.problems{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin-top:30px}
+.prob{border:1px solid var(--line);border-left:2px solid var(--bad);border-radius:0 12px 12px 0;padding:14px 16px;background:linear-gradient(170deg,#0F1420,#090C14)}
+.prob b{display:block;font-weight:500;font-size:14.5px;color:var(--fg);margin-bottom:4px}
+.prob span{font-size:13px;color:var(--dim);display:block}
+
+/* ---------- phone frames ---------- */
+.frames{display:flex;gap:26px;flex-wrap:wrap;margin-top:26px}
+.fr{flex:1 1 262px;min-width:0;max-width:300px}
+.fr>.cap{display:flex;align-items:baseline;gap:9px;margin-bottom:11px}
+.fr>.cap b{font-weight:500;font-size:15px}
+.fr>.cap span{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+.phone{width:100%;aspect-ratio:375/812;border-radius:30px;border:1px solid #1B2232;background:var(--void);
+  box-shadow:0 26px 60px -24px #000, inset 0 1px 0 rgba(170,200,255,.07);
+  overflow:hidden;position:relative;display:flex;flex-direction:column;font-size:10px}
+.phone.bad{border-color:rgba(255,77,94,.28)}
+.scroll{position:absolute;right:4px;top:12%;bottom:6%;width:2px;border-radius:2px;background:linear-gradient(var(--bad),transparent)}
+
+.ph-head{padding:11px 12px 6px;text-align:center;flex:0 0 auto}
+.ph-head .t{font-size:13px;font-weight:200}
+.ph-head .t b{font-weight:700;color:var(--hue)}
+.ph-head .s{color:var(--faint);font-size:7.5px;line-height:1.4;margin-top:2px}
+
+.knob{margin:0 auto;border-radius:29%;background:linear-gradient(152deg,#1E2638,#0C1120 54%,#070A12);
+  box-shadow:inset 0 1px 0 rgba(170,200,255,.14),0 14px 30px -14px #000;display:grid;place-items:center;position:relative;flex:0 0 auto}
+.knob .disc{width:56%;aspect-ratio:1;border-radius:50%;background:radial-gradient(118% 100% at 32% 24%,#2A3550,#1A2238 38%,#121A2C 68%,#0D1423);
+  box-shadow:inset 0 2px 1px rgba(180,210,255,.16),0 8px 16px -8px #000;display:grid;place-items:center;text-align:center}
+.knob .ch{font-size:13px;font-weight:200}
+.knob .sub{font-family:var(--mono);font-size:6px;letter-spacing:.1em;color:var(--dim);margin-top:2px}
+.knob .ind{position:absolute;top:9%;left:50%;width:5px;height:5px;margin-left:-2.5px;border-radius:50%;background:var(--hue);box-shadow:0 0 8px 2px var(--hue)}
+.ring{position:absolute;inset:3%;border-radius:50%;border:1.5px solid transparent;
+  background:conic-gradient(var(--bad) 0 62%,transparent 62%) border-box;-webkit-mask:linear-gradient(#000 0 0) padding-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude}
+
+.pads{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;padding:0 12px;flex:0 0 auto}
+.pad{border-radius:9px;background:linear-gradient(170deg,#141A2A,#0A0E18);box-shadow:inset 0 1px 0 rgba(170,200,255,.07);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--dim);font-size:10px}
+.pad i{font-style:normal;font-family:var(--mono);font-size:6px;color:var(--faint)}
+.pad.on{background:linear-gradient(170deg,#17304d,#0A0E18);box-shadow:inset 0 0 0 1px var(--hue),0 0 18px -4px var(--hue);color:#fff}
+
+.rack{padding:8px 12px;display:flex;flex-wrap:wrap;gap:4px;flex:0 0 auto}
+.f{height:19px;border-radius:5px;border:1px solid var(--line);background:#101624;flex:1 1 42px;display:flex;align-items:center;padding-inline:5px;color:var(--faint);font-size:6.5px;font-family:var(--mono);letter-spacing:.08em}
+.f.wide{flex:1 1 100%}
+.card{margin:6px 12px;border:1px solid var(--line);border-radius:10px;padding:8px;display:flex;gap:5px;align-items:center;background:linear-gradient(175deg,#0E1422,#080B12)}
+.dotrec{width:16px;height:16px;border-radius:50%;background:#0D121F;border:1px solid var(--line);display:grid;place-items:center;flex:0 0 auto}
+.dotrec i{width:6px;height:6px;border-radius:50%;background:var(--bad);display:block}
+.kbdblock{margin:8px 12px;border:1px dashed rgba(255,77,94,.3);border-radius:8px;padding:10px;text-align:center;color:var(--bad);font-family:var(--mono);font-size:6.5px;letter-spacing:.1em}
+
+/* proposed: fixed transport */
+.bar{margin-top:auto;flex:0 0 auto;border-top:1px solid var(--line);background:rgba(8,11,18,.96);
+  padding:9px 12px 14px;display:flex;align-items:center;gap:9px}
+.bar .rec{width:30px;height:30px;border-radius:50%;background:#0D121F;border:1px solid rgba(255,77,94,.5);display:grid;place-items:center;flex:0 0 auto;box-shadow:0 0 16px -4px var(--bad)}
+.bar .rec i{width:11px;height:11px;border-radius:50%;background:var(--bad);display:block}
+.bar .play{height:30px;padding:0 13px;border-radius:9px;border:1px solid rgba(130,170,255,.24);display:flex;align-items:center;color:var(--fg);font-family:var(--mono);font-size:7.5px;letter-spacing:.12em;flex:0 0 auto}
+.bar .lay{display:flex;gap:3px;flex:0 0 auto}
+.bar .lay b{width:6px;height:6px;border-radius:50%;background:#1B2232;display:block}
+.bar .lay b.f1{background:#22D3EE}.bar .lay b.f2{background:#4C9BFF}
+.bar .clock{margin-left:auto;text-align:right;line-height:1.1;flex:0 0 auto}
+.bar .clock b{display:block;font-family:var(--mono);font-size:12px;color:var(--bad)}
+.bar .clock span{font-family:var(--mono);font-size:5.5px;letter-spacing:.1em;color:var(--faint)}
+.bar .gear{width:30px;height:30px;border-radius:9px;border:1px solid var(--line);display:grid;place-items:center;color:var(--dim);font-size:12px;flex:0 0 auto}
+
+/* thumb ring overlay */
+.thumb{position:absolute;left:28%;top:63%;width:112px;height:112px;margin:-56px 0 0 -56px;pointer-events:none}
+.thumb .rr{position:absolute;inset:0;border-radius:50%;border:1px dashed rgba(130,170,255,.3)}
+.thumb .z{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-family:var(--mono);font-size:6px;
+  padding:2px 4px;border-radius:4px;background:rgba(8,11,18,.94);border:1px solid var(--line);color:var(--dim);white-space:nowrap}
+.thumb .z.hot{background:var(--hue);color:var(--void);border-color:var(--hue);font-weight:500}
+.thumb .fing{position:absolute;left:50%;top:50%;width:34px;height:34px;margin:-17px 0 0 -17px;border-radius:50%;background:rgba(233,238,248,.12);border:1px solid rgba(233,238,248,.3)}
+
+/* sheet */
+.sheet{position:absolute;left:0;right:0;bottom:0;top:30%;background:linear-gradient(180deg,#0E1422,#080B12);
+  border-top:1px solid var(--line);border-radius:18px 18px 0 0;padding:10px 12px;box-shadow:0 -22px 50px -20px #000}
+.sheet .grab{width:30px;height:3px;border-radius:3px;background:#2A3346;margin:0 auto 10px}
+.sheet .grp{margin-bottom:9px}
+.sheet .grp>.lab{font-size:6.5px;letter-spacing:.16em;margin-bottom:4px}
+.sheet .r{display:flex;gap:4px;flex-wrap:wrap}
+
+/* annotations */
+.notes{margin-top:13px;display:flex;flex-direction:column;gap:7px}
+.note{display:flex;gap:9px;font-size:12.5px;color:var(--dim);line-height:1.45}
+.note b{flex:0 0 17px;height:17px;border-radius:50%;background:rgba(46,155,255,.14);border:1px solid rgba(46,155,255,.4);
+  color:var(--hue);font-family:var(--mono);font-size:9px;font-weight:500;display:grid;place-items:center;margin-top:1px}
+.note.neg b{background:rgba(255,77,94,.12);border-color:rgba(255,77,94,.4);color:var(--bad)}
+
+section{margin-top:58px}
+section>h2{font-size:clamp(21px,3.2vw,29px);margin-bottom:6px}
+section>p.lede{color:var(--dim);max-width:66ch;margin:0 0 22px}
+.rows{border-top:1px solid var(--line)}
+.rw{display:grid;grid-template-columns:150px 1fr;gap:20px;padding-block:17px;border-bottom:1px solid rgba(130,170,255,.06)}
+.rw>b{font-weight:500;font-size:14.5px}
+.rw>div{color:var(--dim);font-size:14px}
+.rw>div em{font-style:normal;color:var(--fg)}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:12px;margin-top:18px}
+table{border-collapse:collapse;width:100%;min-width:480px;font-size:13.5px}
+th,td{text-align:left;padding:10px 14px;border-bottom:1px solid rgba(130,170,255,.06)}
+th{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);background:#0B0F18}
+tr:last-child td{border-bottom:0}
+td.m{font-family:var(--mono);font-size:12px;color:var(--dim)}
+td.y{color:var(--good)}td.n{color:var(--bad)}
+.ask{margin-top:44px;padding:20px 22px;border:1px solid rgba(46,155,255,.22);border-radius:16px;background:rgba(46,155,255,.05)}
+.ask h3{font-size:18px;margin-bottom:8px}
+.ask p{margin:0;color:#AFC0DC;font-size:14px}
+@media (max-width:720px){.rw{grid-template-columns:1fr;gap:5px}.fr{max-width:none}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+<header>
+  <div class="lab">Proposal · 2026-10-09</div>
+  <h1>Slipstream <b>Mobile</b></h1>
+  <p>The desktop layout works because your eye and your cursor are in different places. On a
+  phone they are the same place, your thumb, and that breaks three things at once.</p>
+  <div class="problems">
+    <div class="prob"><b>You cannot record and play at once</b><span>The transport sits around 900px below the pads. Starting a take means scrolling away from the instrument.</span></div>
+    <div class="prob"><b>Feedback is 300px from your thumb</b><span>Press and slide changes the chord, but the only readout is a knob at the top of the screen, often behind your hand.</span></div>
+    <div class="prob"><b>The knob takes 40% of the screen to do nothing</b><span>The gesture starts on the pad, so on a phone you never touch the knob. It is a readout wearing a control's clothes.</span></div>
+  </div>
+</header>
+
+<section>
+  <div class="lab">Side by side</div>
+  <h2>One screen, thumb-first</h2>
+  <p class="lede">Frames are drawn to scale at 375 by 812. The proposal fits the whole instrument above the
+  fold and moves everything you are not touching mid-performance into a sheet.</p>
+
+  <div class="frames">
+
+    <div class="fr">
+      <div class="cap"><b>Today</b><span>scrolls · 2100px</span></div>
+      <div class="phone bad">
+        <div class="scroll"></div>
+        <div class="ph-head"><div class="t">Slip<b>stream</b></div><div class="s">Hold a chord, change the key, and the notes slide rather than restart.</div></div>
+        <div class="knob" style="width:74%;aspect-ratio:1"><div class="ind"></div><div class="disc"><div><div class="ch">—</div><div class="sub">PRESS 1–7</div></div></div></div>
+        <div class="pads" style="margin-top:8px">
+          <div class="pad" style="aspect-ratio:4/5">1<i>I</i></div><div class="pad" style="aspect-ratio:4/5">2<i>ii</i></div>
+          <div class="pad" style="aspect-ratio:4/5">3<i>iii</i></div><div class="pad" style="aspect-ratio:4/5">4<i>IV</i></div>
+          <div class="pad" style="aspect-ratio:4/5">5<i>V</i></div><div class="pad" style="aspect-ratio:4/5">6<i>vi</i></div>
+          <div class="pad" style="aspect-ratio:4/5">7<i>vii°</i></div>
+        </div>
+        <div class="rack">
+          <div class="f">KEY C</div><div class="f">SCALE</div><div class="f">TEMPO</div>
+          <div class="f">CLICK</div><div class="f">VOICING</div><div class="f">OCTAVE</div>
+          <div class="f wide">VOICE GLASS</div>
+        </div>
+        <div class="card"><div class="dotrec"><i></i></div><div class="f" style="flex:1">PLAY</div><div class="f">—</div></div>
+        <div class="kbdblock">KNOB ON A KEYBOARD<br>9-KEY CLUSTER · NO KEYBOARD HERE</div>
+      </div>
+      <div class="notes">
+        <div class="note neg"><b>1</b><div>Transport is off-screen. You scroll to record, then scroll back to play.</div></div>
+        <div class="note neg"><b>2</b><div>Six fields and four chips are permanently on screen, none touched mid-take.</div></div>
+        <div class="note neg"><b>3</b><div>A keyboard map, on a device with no keyboard.</div></div>
+      </div>
+    </div>
+
+    <div class="fr">
+      <div class="cap"><b>Playing</b><span>fits · no scroll</span></div>
+      <div class="phone">
+        <div class="ph-head" style="padding-bottom:3px"><div class="t">Slip<b>stream</b></div></div>
+        <div class="knob" style="width:56%;aspect-ratio:1"><div class="ind"></div><div class="disc"><div><div class="ch">Cmaj7</div><div class="sub">I · 7TH</div></div></div></div>
+        <div class="pads" style="margin-top:10px">
+          <div class="pad on" style="aspect-ratio:3/4">1<i>I</i></div><div class="pad" style="aspect-ratio:3/4">2<i>ii</i></div>
+          <div class="pad" style="aspect-ratio:3/4">3<i>iii</i></div><div class="pad" style="aspect-ratio:3/4">4<i>IV</i></div>
+          <div class="pad" style="aspect-ratio:3/4">5<i>V</i></div><div class="pad" style="aspect-ratio:3/4">6<i>vi</i></div>
+          <div class="pad" style="aspect-ratio:3/4">7<i>vii°</i></div>
+        </div>
+        <div class="bar">
+          <div class="rec"><i></i></div>
+          <div class="play">PLAY</div>
+          <div class="lay"><b class="f1"></b><b class="f2"></b><b></b><b></b></div>
+          <div class="clock"><b>—</b><span>STOPPED</span></div>
+          <div class="gear">⚙</div>
+        </div>
+      </div>
+      <div class="notes">
+        <div class="note"><b>1</b><div>Knob drops from 74% to 56% of the width. It is a readout here, so it does not need the room.</div></div>
+        <div class="note"><b>2</b><div>Pads grow and move into the thumb arc.</div></div>
+        <div class="note"><b>3</b><div>Transport is pinned: record, play, layer dots, countdown, setup. Never scrolls away.</div></div>
+      </div>
+    </div>
+
+    <div class="fr">
+      <div class="cap"><b>Sliding</b><span>mid-gesture</span></div>
+      <div class="phone">
+        <div class="ph-head" style="padding-bottom:3px"><div class="t">Slip<b>stream</b></div></div>
+        <div class="knob" style="width:56%;aspect-ratio:1"><div class="ring"></div><div class="ind" style="top:18%;left:78%"></div><div class="disc"><div><div class="ch">C7</div><div class="sub">I · DOM7</div></div></div></div>
+        <div class="pads" style="margin-top:10px">
+          <div class="pad on" style="aspect-ratio:3/4">1<i>I</i></div><div class="pad" style="aspect-ratio:3/4">2<i>ii</i></div>
+          <div class="pad" style="aspect-ratio:3/4">3<i>iii</i></div><div class="pad" style="aspect-ratio:3/4">4<i>IV</i></div>
+          <div class="pad" style="aspect-ratio:3/4">5<i>V</i></div><div class="pad" style="aspect-ratio:3/4">6<i>vi</i></div>
+          <div class="pad" style="aspect-ratio:3/4">7<i>vii°</i></div>
+        </div>
+        <div class="thumb">
+          <div class="rr"></div><div class="fing"></div>
+          <div class="z" style="margin-top:-42px">triad</div>
+          <div class="z hot" style="margin-left:30px;margin-top:-30px">dom7</div>
+          <div class="z" style="margin-left:42px">+7th</div>
+          <div class="z" style="margin-left:30px;margin-top:30px">add9</div>
+          <div class="z" style="margin-top:42px">sus4</div>
+          <div class="z" style="margin-left:-30px;margin-top:30px">6th</div>
+          <div class="z" style="margin-left:-42px">sus2</div>
+          <div class="z" style="margin-left:-30px;margin-top:-30px">aug</div>
+        </div>
+        <div class="bar">
+          <div class="rec" style="box-shadow:0 0 22px -3px var(--bad)"><i></i></div>
+          <div class="play">STOP</div>
+          <div class="lay"><b class="f1"></b><b class="f2"></b><b></b><b></b></div>
+          <div class="clock"><b>6.2s</b><span>RECORDING</span></div>
+          <div class="gear">⚙</div>
+        </div>
+      </div>
+      <div class="notes">
+        <div class="note"><b>1</b><div><em>The change.</em> The transform ring forms under your thumb, so you choose a chord colour by looking where your hand already is.</div></div>
+        <div class="note"><b>2</b><div>The knob mirrors it for anyone watching, and its ring fills red as the take runs out.</div></div>
+        <div class="note"><b>3</b><div>Countdown sits in the bar, in your eyeline, not 600px up the page.</div></div>
+      </div>
+    </div>
+
+    <div class="fr">
+      <div class="cap"><b>Setup sheet</b><span>tap ⚙</span></div>
+      <div class="phone">
+        <div class="ph-head" style="padding-bottom:3px;opacity:.35"><div class="t">Slip<b>stream</b></div></div>
+        <div class="knob" style="width:56%;aspect-ratio:1;opacity:.35"><div class="disc"></div></div>
+        <div class="sheet">
+          <div class="grab"></div>
+          <div class="grp"><div class="lab">Harmony</div><div class="r"><div class="f">KEY C</div><div class="f">SCALE MAJ</div><div class="f">VOICING</div><div class="f">OCTAVE 0</div></div></div>
+          <div class="grp"><div class="lab">Time</div><div class="r"><div class="f">TEMPO 96</div><div class="f">CLICK ✓</div><div class="f">BARS 4</div><div class="f">QUANTIZE</div></div></div>
+          <div class="grp"><div class="lab">Voice</div><div class="r"><div class="f">GLASS</div><div class="f">SLIDE</div><div class="f">HOLD</div><div class="f">TUNE</div></div></div>
+          <div class="grp"><div class="lab">Layers</div><div class="r"><div class="f wide">1 · GLASS · 4 CHORDS</div><div class="f wide">2 · SUB · 2 CHORDS</div></div></div>
+          <div class="grp"><div class="r"><div class="f">PRESETS</div><div class="f">SHARE</div><div class="f">CLEAR</div></div></div>
+        </div>
+      </div>
+      <div class="notes">
+        <div class="note"><b>1</b><div>Everything you are not touching mid-performance, grouped the way the desktop rack already groups it.</div></div>
+        <div class="note"><b>2</b><div>Layers live here too, with the dots in the bar as the at-a-glance version.</div></div>
+        <div class="note"><b>3</b><div>Swipe down or tap the dimmed instrument to close.</div></div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<section>
+  <div class="lab">The moves</div>
+  <h2>Four changes, one of which matters most</h2>
+  <div class="rows">
+    <div class="rw"><b>Ring under the thumb</b><div><em>The one that actually matters.</em> Mobile is the only place where the person choosing the chord colour cannot see the thing displaying it. Everything else here is layout; this is the interaction being wrong.</div></div>
+    <div class="rw"><b>Pinned transport</b><div>Record, play, layer dots, countdown and setup in a bar that never scrolls, inside the thumb arc, padded for the home indicator.</div></div>
+    <div class="rw"><b>Knob at 56%</b><div>It is a readout on a phone, not a control. Giving back that height is what lets the pads grow and the transport stay pinned.</div></div>
+    <div class="rw"><b>Setup sheet</b><div>Sixteen controls leave the main screen. The grouping is the one already built for desktop, so nothing new has to be invented.</div></div>
+    <div class="rw"><b>Hide the key map</b><div>A nine-key cluster diagram on a device with no keyboard. Below 640px it should not render at all.</div></div>
+  </div>
+
+  <div class="tbl"><table>
+    <tr><th>&nbsp;</th><th>Today</th><th>Proposed</th></tr>
+    <tr><td class="m">Scroll to start a take</td><td class="n">yes</td><td class="y">no</td></tr>
+    <tr><td class="m">Transform feedback near the thumb</td><td class="n">no</td><td class="y">yes</td></tr>
+    <tr><td class="m">Take countdown visible while playing</td><td class="n">no</td><td class="y">yes</td></tr>
+    <tr><td class="m">Pad target</td><td class="m">77 x 96</td><td class="m">84 x 112</td></tr>
+    <tr><td class="m">Permanent controls on screen</td><td class="m">20</td><td class="m">5</td></tr>
+    <tr><td class="m">Page height</td><td class="m">~2100px</td><td class="m">one screen</td></tr>
+  </table></div>
+</section>
+
+<section>
+  <div class="lab">Deliberately not proposing</div>
+  <h2>Three things I left alone</h2>
+  <div class="rows">
+    <div class="rw"><b>Landscape</b><div>A wide pad row with the knob beside it is the better instrument, but it collapses the vertical space the sheet needs and doubles the layout work. Worth doing after the portrait layout proves out, not instead of it.</div></div>
+    <div class="rw"><b>A separate mobile build</b><div>All of this is CSS and one overlay inside the existing page. A second codebase for phones would cost more than it returns at this size.</div></div>
+    <div class="rw"><b>Bigger changes to the gesture</b><div>Press and slide is right and does not need replacing. It needs feedback where the hand is, which is a rendering change, not an interaction change.</div></div>
+  </div>
+</section>
+
+<div class="ask">
+  <h3>What I need from you</h3>
+  <p>The ring under the thumb is the one I would build first and the one I am most confident about.
+  The knob shrinking to 56% is the call I am least sure of, because it is the product's face and this
+  makes it smaller. If that trade feels wrong, the alternative is keeping the knob large and letting
+  the pads stay where they are, which keeps the transport pinned but loses the growth in pad size.</p>
+</div>
+</div>
