@@ -21,6 +21,10 @@ export function createControls(handlers) {
 
   el('invbtn').onclick = () => { S.inv = (S.inv + 1) % 3; cb.onVoicing(); };
   el('octbtn').onclick = () => { S.oct = S.oct >= 1 ? -1 : S.oct + 1; cb.onVoicing(); };
+  /* The shifters clamp rather than wrap: mid-phrase you want a direction, not
+     a surprise drop of two octaves. The field keeps cycling. */
+  el('octdn').onclick = () => { if (S.oct > -1) { S.oct--; cb.onVoicing(); } };
+  el('octup').onclick = () => { if (S.oct <  1) { S.oct++; cb.onVoicing(); } };
 
   el('slidebtn').onclick = e => {
     S.slide = !S.slide;
@@ -51,6 +55,10 @@ export function renderControls() {
   el('sndsel').value = S.sound;
   el('invbtn').querySelector('.fv').textContent = INVERSIONS[S.inv];
   el('octbtn').querySelector('.fv').textContent = S.oct > 0 ? '+1' : S.oct < 0 ? '−1' : '0';
+  el('octdn').disabled = S.oct <= -1;
+  el('octup').disabled = S.oct >= 1;
+  el('octdn').dataset.on = S.oct < 0 ? '1' : '0';
+  el('octup').dataset.on = S.oct > 0 ? '1' : '0';
   el('clickbox').checked = S.click;
   el('clicktxt').textContent = S.click ? 'On' : 'Off';
   el('glide').value = S.glide;

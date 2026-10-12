@@ -103,6 +103,15 @@ Cmaj7   root    C  E  G  B
         2nd     G  B  C  E
 ```
 
+Two shifters flank the knob for moving an octave mid-phrase without reaching for a menu, marked
+`8vb` and `8va` after the move they actually make. They clamp at the ends rather than wrapping,
+because mid-phrase you want a direction and not a surprise drop of two octaves, and they light
+when you are away from centre. The Octave field in the rack still cycles, for setting rather
+than performing.
+
+Shifting while a chord is held glides it, since octave is part of voicing and voicing runs
+through the same path as everything else.
+
 Inversion applies to recorded layers too, so you can re-voice a whole arrangement after the
 fact without re-recording it.
 

@@ -32,7 +32,25 @@ header h1 b{font-weight:700;color:var(--hue);transition:color .4s}
 header p{color:var(--fg-dim);margin:10px auto 0;max-width:48ch;font-size:14.5px;font-weight:300}
 
 /* ---------- knob module ---------- */
-.stage{position:relative;display:flex;justify-content:center;padding-block:26px 8px}
+.stage{position:relative;display:flex;align-items:center;justify-content:center;
+  gap:clamp(10px,2.2vw,28px);padding-block:26px 8px}
+
+/* Octave shifters either side of the knob, for moving mid-phrase without
+   reaching for a menu. 8va and 8vb are what the move is actually called. */
+.octshift{flex:0 0 auto;width:56px;height:124px;border-radius:17px;cursor:pointer;
+  background:linear-gradient(170deg,#131A2B,#0A0E18);border:1px solid var(--line);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;
+  color:var(--fg-dim);transition:color .16s,background .16s,border-color .16s,box-shadow .16s,transform .09s;
+  -webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.octshift:hover:not([disabled]){border-color:rgba(130,170,255,.26);color:var(--fg)}
+.octshift:active:not([disabled]){transform:translateY(2px)}
+.octshift .chev{width:14px;height:14px;border-right:2px solid currentColor;border-bottom:2px solid currentColor}
+.octshift.up .chev{transform:rotate(-135deg);margin-top:4px}
+.octshift.down .chev{transform:rotate(45deg);margin-bottom:4px}
+.octshift .t{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em}
+.octshift[data-on="1"]{color:var(--void);background:var(--hue);border-color:var(--hue);
+  box-shadow:0 0 28px -6px var(--hue)}
+.octshift[disabled]{opacity:.26;cursor:default}
 .aura{position:absolute;width:min(560px,96vw);aspect-ratio:1;border-radius:50%;
   background:radial-gradient(circle,var(--hue) 0%,transparent 62%);
   opacity:.05;filter:blur(42px);transition:opacity .45s ease,background .45s ease;pointer-events:none}
@@ -292,7 +310,10 @@ input[type=range]::-moz-range-thumb{width:15px;height:15px;border:0;border-radiu
   header h1{font-size:30px}
   header p{display:none}
   .stage{padding-block:12px 2px}
-  .module{width:min(286px,76vw)}
+  .module{width:min(244px,62vw)}
+  .octshift{width:44px;height:96px;border-radius:14px;gap:7px}
+  .octshift .chev{width:12px;height:12px}
+  .octshift .t{font-size:8.5px}
   .pads{grid-template-columns:repeat(4,1fr);gap:7px;margin-top:18px}
   .pad{aspect-ratio:auto;min-height:116px;border-radius:16px}
   .pad .n{font-size:19px}
@@ -343,6 +364,8 @@ input[type=range]::-moz-range-thumb{width:15px;height:15px;border:0;border-radiu
 
 <div class="stage" id="stage">
   <div class="aura"></div>
+  <button class="octshift down" id="octdn" type="button" aria-label="Octave down">
+    <span class="chev"></span><span class="t">8vb</span></button>
   <div class="module" id="module">
     <svg class="ringsvg" viewBox="0 0 400 400" aria-hidden="true">
       <g id="dots"></g>
@@ -361,6 +384,8 @@ input[type=range]::-moz-range-thumb{width:15px;height:15px;border:0;border-radiu
       </div>
     </div>
   </div>
+  <button class="octshift up" id="octup" type="button" aria-label="Octave up">
+    <span class="chev"></span><span class="t">8va</span></button>
 </div>
 
 <div class="pads" id="pads"></div>
