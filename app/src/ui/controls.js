@@ -7,6 +7,16 @@ import { SOUNDS } from '../audio/sounds.js';
 import { S } from '../state/store.js';
 
 const INVERSIONS = ['Root', '1st', '2nd'];
+let bumpTimer = {};
+
+/* The shifters are also on the keyboard, so they answer a key the way they
+   answer a press. */
+function bump(id) {
+  const b = el(id);
+  b.classList.add('bump');
+  clearTimeout(bumpTimer[id]);
+  bumpTimer[id] = setTimeout(() => b.classList.remove('bump'), 150);
+}
 let cb = {};
 
 export function createControls(handlers) {
@@ -23,8 +33,8 @@ export function createControls(handlers) {
   el('octbtn').onclick = () => { S.oct = S.oct >= 1 ? -1 : S.oct + 1; cb.onVoicing(); };
   /* The shifters clamp rather than wrap: mid-phrase you want a direction, not
      a surprise drop of two octaves. The field keeps cycling. */
-  el('octdn').onclick = () => { if (S.oct > -1) { S.oct--; cb.onVoicing(); } };
-  el('octup').onclick = () => { if (S.oct <  1) { S.oct++; cb.onVoicing(); } };
+  el('octdn').onclick = () => { if (S.oct > -1) { S.oct--; bump('octdn'); cb.onVoicing(); } };
+  el('octup').onclick = () => { if (S.oct <  1) { S.oct++; bump('octup'); cb.onVoicing(); } };
 
   el('slidebtn').onclick = e => {
     S.slide = !S.slide;

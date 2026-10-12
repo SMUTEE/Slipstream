@@ -53,7 +53,8 @@ transport is its own card, with record and play as the only full-size controls i
 | `G` | Toggle slide |
 | `Esc` | Recentre the knob |
 | `V` | Cycle the voicing — root, first inversion, second inversion |
-| `O` | Shift the octave |
+| `-` `=` | Octave down and up. They clamp at the ends, like the shifters either side of the knob |
+| `O` | Cycle the octave, like the field in the rack |
 | `R` | Record — starts the loop if it isn't running, commits the layer on the second press |
 | `Enter` | Start or stop the loop |
 | `Backspace` | Delete the last layer |
@@ -102,6 +103,10 @@ Cmaj7   root    C  E  G  B
         1st     E  G  B  C
         2nd     G  B  C  E
 ```
+
+On a keyboard they are `-` and `=`, immediately right of the degree keys on the same row, so
+the hand that plays is the hand that shifts. Pressing one bumps the matching shifter on screen,
+so the two read as the same control.
 
 Two shifters flank the knob for moving an octave mid-phrase without reaching for a menu, marked
 `8vb` and `8va` after the move they actually make. They clamp at the ends rather than wrapping,

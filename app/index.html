@@ -44,6 +44,7 @@ header p{color:var(--fg-dim);margin:10px auto 0;max-width:48ch;font-size:14.5px;
   -webkit-tap-highlight-color:transparent;touch-action:manipulation}
 .octshift:hover:not([disabled]){border-color:rgba(130,170,255,.26);color:var(--fg)}
 .octshift:active:not([disabled]){transform:translateY(2px)}
+.octshift.bump:not([disabled]){transform:translateY(2px);border-color:var(--hue);color:var(--hue)}
 .octshift .chev{width:14px;height:14px;border-right:2px solid currentColor;border-bottom:2px solid currentColor}
 .octshift.up .chev{transform:rotate(-135deg);margin-top:4px}
 .octshift.down .chev{transform:rotate(45deg);margin-bottom:4px}
@@ -469,7 +470,8 @@ input[type=range]::-moz-range-thumb{width:15px;height:15px;border:0;border-radiu
       <div class="kmrow"><kbd>↑ → ↓ ←</kbd><p>The four cardinals. Hold two at once for a diagonal, the way a real stick works.</p></div>
       <div class="kmrow"><kbd>Space</kbd><p>Latch the chord so your hands are free to change key and hear it slide.</p></div>
       <div class="kmrow"><kbd>G</kbd><p>Toggle slide. <kbd style="padding:1px 5px">Esc</kbd> recentres the knob.</p></div>
-      <div class="kmrow"><kbd>V</kbd><p>Cycle the voicing — root position, first inversion, second inversion. <kbd style="padding:1px 5px">O</kbd> shifts the octave.</p></div>
+      <div class="kmrow"><kbd>V</kbd><p>Cycle the voicing — root position, first inversion, second inversion.</p></div>
+      <div class="kmrow"><kbd>-&nbsp; =</kbd><p>Octave down and up, right beside the degree keys. They clamp at the ends, like the shifters either side of the knob. <kbd style="padding:1px 5px">O</kbd> cycles instead, like the field in the rack.</p></div>
       <div class="kmrow"><kbd>R</kbd><p>Record. Starts the loop if it isn't running, and commits the layer when you press it again.</p></div>
       <div class="kmrow"><kbd>Enter</kbd><p>Start or stop the loop. <kbd style="padding:1px 5px">Backspace</kbd> deletes the last layer.</p></div>
     </div>

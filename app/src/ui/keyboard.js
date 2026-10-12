@@ -1,5 +1,9 @@
 /* Keys 1 to 7 play. The nine-key cluster mirrors the knob spatially, and the
-   bracket keys step through the four detents between the compass points. */
+   bracket keys step through the four detents between the compass points.
+
+   Octave sits on - and = , immediately right of the degree keys on the same
+   row, so the hand that plays is the hand that shifts. They mirror the on
+   screen shifters and clamp; O still cycles, like the field in the rack. */
 
 import { COMPASS } from '../music/detents.js';
 
@@ -39,6 +43,8 @@ export function bindKeyboard(h) {
     if (lower in CLUSTER) { ev.preventDefault(); h.detent(CLUSTER[lower]); return; }
     if (key === '[') { ev.preventDefault(); h.step(-1); return; }
     if (key === ']') { ev.preventDefault(); h.step(1); return; }
+    if (key === '-' || key === '_') { ev.preventDefault(); h.octaveDown(); return; }
+    if (key === '=' || key === '+') { ev.preventDefault(); h.octaveUp(); return; }
     if (key in ARROWS) {
       ev.preventDefault();
       arrowsDown.add(key);

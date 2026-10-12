@@ -209,6 +209,8 @@ bindKeyboard({
   toggleSlide:  () => el('slidebtn').click(),
   cycleVoicing: () => el('invbtn').click(),
   cycleOctave:  () => el('octbtn').click(),
+  octaveDown:   () => el('octdn').click(),
+  octaveUp:     () => el('octup').click(),
   record:       () => { unlock(); toggleRecord(); startFrames(); },
   run:          () => { unlock(); LP.running ? stopTransport() : startTransport(); startFrames(); },
   undoLayer:    () => { const last = LP.layers[LP.layers.length - 1]; if (last) removeLayer(last); }
