@@ -60,6 +60,9 @@ function reflow() {
 
 function play(degree) {
   unlock();
+  /* Hold removes the release that would normally end a chord, so pressing the
+     same pad again is how you stop it. A different pad still replaces. */
+  if (S.hold && S.degree === degree) { silence(); return; }
   S.degree = degree;
   renderPads(romans(), degree);
   reflow();
@@ -185,7 +188,9 @@ createControls({
   onHarmony:  () => { renderPads(romans(), S.degree); reflow(); renderLayers(); save(); },
   onVoice:    () => { markAllOff(); reflow(); },
   onVoicing:  () => { renderControls(); reflow(); save(); },
-  onHoldOff:  () => { if (S.degree === null) silence(); },
+  /* Switching hold off ends whatever it was sustaining. The old guard did the
+     opposite and left a chord ringing with the pad stuck lit. */
+  onHoldOff:  () => silence(),
   onEffects:  () => { setEffects(S.reverb, S.delay); save(); },
   onTempo:    bpm => { LP.bpm = bpm; renderTempo(bpm); resync(); save(); },
   onClick:    () => saveClickPref(S.click)

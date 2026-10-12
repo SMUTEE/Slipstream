@@ -50,6 +50,10 @@ transport is its own card, with record and play as the only full-size controls i
 | `[` `]` | Step the knob one detent — this reaches all twelve |
 | `↑ → ↓ ←` | The four cardinals; hold two at once for a diagonal |
 | `Space` | Latch the chord so you can change key and hear it slide |
+
+**Hold** latches a chord so your hands are free. Because there is no release to end it, pressing
+the same pad again stops it, and a different pad replaces it. Switching Hold back off releases
+whatever it was sustaining.
 | `G` | Toggle slide |
 | `Esc` | Recentre the knob |
 | `V` | Cycle the voicing — root, first inversion, second inversion |
@@ -278,10 +282,11 @@ tests/run.mjs           the suite
 
 Native ES modules, so there is still nothing to build. The one consequence is that
 `app/index.html` needs to be served rather than opened from disk, because browsers refuse
-module imports over `file://`.
+module imports over `file://`. `devserver.py` is a plain static server that sends no-store, so a
+changed module never boots against a cached one.
 
 ```
-python3 -m http.server 8777     # then open http://localhost:8777/app/
+python3 devserver.py            # then open http://localhost:8777/app/
 ```
 
 The dependency direction only ever points one way. `music/` knows nothing about audio or the
@@ -317,7 +322,7 @@ enhancement.
 Serve the folder and open `app/`:
 
 ```
-python3 -m http.server 8777
+python3 devserver.py
 ```
 
 There is nothing to install and nothing to build.

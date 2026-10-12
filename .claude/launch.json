@@ -1,6 +1,11 @@
 {
   "version": "0.0.1",
   "configurations": [
-    { "name": "slipstream", "runtimeExecutable": "python3", "runtimeArgs": ["-m", "http.server", "8779"], "port": 8779 }
+    {
+      "name": "slipstream",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["devserver.py", "8777"],
+      "port": 8777
+    }
   ]
 }
