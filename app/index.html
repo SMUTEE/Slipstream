@@ -68,6 +68,14 @@ header p{color:var(--fg-dim);margin:10px auto 0;max-width:48ch;font-size:14.5px;
 .ind{width:9px;height:9px;border-radius:50%;background:var(--hue);margin-top:9%;
   box-shadow:0 0 12px 3px var(--hue),0 0 30px 6px color-mix(in srgb,var(--hue) 55%,transparent);transition:background .3s,box-shadow .3s}
 .face{position:relative;text-align:center;pointer-events:none;padding-inline:8px}
+/* The centre marker: lit on the plain triad, hollow once the knob has moved off
+   it. The dot ring shows how far you have gone; this shows that you are home. */
+.face .home{display:block;width:8px;height:8px;border-radius:50%;margin:0 auto 9px;
+  background:#222B40;border:1px solid rgba(130,170,255,.22);
+  transition:background .18s,border-color .18s,box-shadow .18s}
+.face .home[data-on="1"]{background:var(--hue);border-color:var(--hue);
+  box-shadow:0 0 14px 3px var(--hue),0 0 30px 6px color-mix(in srgb,var(--hue) 45%,transparent)}
+.face.idle .home{opacity:.3;box-shadow:none}
 .face .chord{font-size:clamp(28px,7.4vw,40px);font-weight:200;letter-spacing:-.02em;line-height:1.05;
   text-shadow:0 0 26px color-mix(in srgb,var(--hue) 45%,transparent);transition:text-shadow .3s}
 .face{transition:opacity .4s}
@@ -347,6 +355,7 @@ input[type=range]::-moz-range-thumb{width:15px;height:15px;border:0;border-radiu
          aria-valuemin="0" aria-valuemax="11" aria-valuenow="0" aria-valuetext="triad">
       <div class="knobrot" id="knobrot"><div class="ind"></div></div>
       <div class="face idle" id="face">
+        <span class="home" id="knobhome" data-on="0" aria-hidden="true"></span>
         <div class="chord" id="chord">—</div>
         <div class="sub" id="sub">press 1–7</div>
       </div>

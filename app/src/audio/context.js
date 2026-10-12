@@ -26,17 +26,18 @@ function makeImpulse(seconds, decay) {
   return buf;
 }
 
+export const audioRunning = () => !!ac && ac.state === 'running';
+
 /**
- * Build the graph on first call, resume it on later ones.
- * @returns true once there is a running context
+ * Build the graph if needed, then resume. Both halves matter: a context created
+ * inside a gesture starts running on desktop Chrome but starts suspended on
+ * iOS Safari, so creating one is not the same as unlocking one.
+ * @returns a promise that settles once resume has been attempted
  */
 export function ensureAudio({ reverb = .45, delay = .34 } = {}) {
-  if (ac) {
-    if (ac.state !== 'running') ac.resume();
-    return true;
-  }
+  if (ac) return resumeIfNeeded();
   const Ctx = window.AudioContext || window.webkitAudioContext;
-  if (!Ctx) return false;
+  if (!Ctx) return Promise.resolve(false);
   ac = new Ctx({ latencyHint: 'interactive' });
 
   const comp = ac.createDynamicsCompressor();
@@ -64,7 +65,24 @@ export function ensureAudio({ reverb = .45, delay = .34 } = {}) {
   reverbGain = ac.createGain();           reverbGain.gain.value = reverb * .9;
   wet.connect(conv); conv.connect(reverbGain); reverbGain.connect(master);
 
-  return true;
+  /* iOS wants a buffer actually played inside the gesture before it treats the
+     context as unlocked. A single silent sample is enough and costs nothing
+     anywhere else. */
+  try {
+    const buf = ac.createBuffer(1, 1, 22050);
+    const src = ac.createBufferSource();
+    src.buffer = buf;
+    src.connect(ac.destination);
+    src.start(0);
+  } catch (e) {}
+
+  return resumeIfNeeded();
+}
+
+function resumeIfNeeded() {
+  if (!ac) return Promise.resolve(false);
+  if (ac.state === 'running') return Promise.resolve(true);
+  return ac.resume().then(() => ac.state === 'running', () => false);
 }
 
 export function setEffects(reverb, delay) {
@@ -73,5 +91,10 @@ export function setEffects(reverb, delay) {
 }
 
 export function audioInfo() {
-  return ac ? { voices: 5, latencyMs: Math.round((ac.baseLatency || .003) * 1000) } : null;
+  if (!ac) return null;
+  return {
+    voices: 5,
+    latencyMs: Math.round((ac.baseLatency || .003) * 1000),
+    state: ac.state            /* suspended, running, or interrupted after a call on iOS */
+  };
 }

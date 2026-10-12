@@ -9,7 +9,7 @@ import { buildChord, chordName, degreeRoman } from './music/chords.js';
 import { voiced } from './music/voicing.js';
 import { DETENTS } from './music/detents.js';
 
-import { ensureAudio, setEffects, audioInfo } from './audio/context.js';
+import { ensureAudio, setEffects, audioInfo, audioRunning } from './audio/context.js';
 import { initPool, applyChord, releaseAll, markAllOff } from './audio/pool.js';
 
 import {
@@ -88,14 +88,31 @@ function setDetent(d) {
 }
 
 /* ----------------------------------------------------------------- audio */
-let unlocked = false;
+let poolBuilt = false;
 function unlock() {
-  if (unlocked) return;
-  if (!ensureAudio({ reverb: S.reverb, delay: S.delay })) return;
-  initPool();
-  setEffects(S.reverb, S.delay);
-  setAudioStatus(audioInfo());
-  unlocked = true;
+  ensureAudio({ reverb: S.reverb, delay: S.delay }).then(() => {
+    if (!audioRunning()) { setAudioStatus(audioInfo()); return; }
+    if (!poolBuilt) { initPool(); setEffects(S.reverb, S.delay); poolBuilt = true; }
+    setAudioStatus(audioInfo());
+  });
+}
+
+/* Keep trying until the context is actually running, rather than assuming the
+   first gesture did it. iOS can also drop a context to "interrupted" after a
+   phone call, so coming back to the tab retries too. */
+function armUnlock() {
+  const attempt = () => {
+    unlock();
+    if (audioRunning()) {
+      document.removeEventListener('pointerdown', attempt, true);
+      document.removeEventListener('keydown', attempt, true);
+    }
+  };
+  document.addEventListener('pointerdown', attempt, true);
+  document.addEventListener('keydown', attempt, true);
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && !audioRunning()) unlock();
+  });
 }
 
 /* ------------------------------------------------------------ transport  */
@@ -206,7 +223,7 @@ initRecorder({
 });
 
 initMobile();
-document.addEventListener('pointerdown', unlock, { once: true, capture: true });
+armUnlock();
 
 S.click = loadClickPref(S.click);
 const saved = loadSaved();

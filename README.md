@@ -74,6 +74,10 @@ can start a take without scrolling away from the thing you are playing.
 compass positions appear around your finger or cursor with the current one lit, so you can see
 where you already are before moving.
 
+The centre of the knob carries a marker for the plain triad: lit when you are on it, hollow
+once the knob has moved off. The dot ring shows how far you have travelled, the centre dot
+shows that you are home.
+
 It is a legend, not a workaround for a hand covering the screen, which is why it shows on a
 desktop too. Without it you have to already know that sliding does anything, and even then the
 eight options are invisible: the knob shows the result, never the menu. Near a screen edge the
@@ -198,6 +202,20 @@ whoever opens it — they can move it to their own key without losing what you w
 Four progressions that load straight into a layer and start playing: `I–V–vi–IV`, `ii–V–I`,
 `vi–IV–I–V`, and a minor `i–VII–VI–v`. They set the scale they need, and they are ordinary
 layers once loaded, so you can mute them, delete them or stack your own on top.
+
+
+## Starting the sound
+
+Browsers require a gesture before a page may make sound, so the audio graph is built on your
+first tap or keypress. Two details matter on iOS: a context created inside a gesture still
+starts suspended there, unlike desktop Chrome, so it is explicitly resumed; and Safari wants a
+buffer actually played inside the gesture before it treats the context as unlocked, so a single
+silent sample is played. The page keeps retrying on each interaction until the context reports
+`running`, and retries again when you return to the tab, because iOS can drop a context to
+`interrupted` after a phone call.
+
+If sound still does not arrive on an iPhone, check the hardware mute switch: Safari respects it
+for Web Audio.
 
 ## Voices
 

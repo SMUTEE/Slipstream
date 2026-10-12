@@ -4,7 +4,7 @@
 import { el, svgEl, arcPath } from './dom.js';
 
 const DOTS = 48, R_DOTS = 158, R_ARC = 136, R_PLAY = 181;
-let knob, rot, arc, dotsG, ticksG, ph, phTrack, face, chordEl, subEl;
+let knob, rot, arc, dotsG, ticksG, ph, phTrack, face, chordEl, subEl, homeEl;
 let onDetent = () => {};
 let drag = null;
 
@@ -12,7 +12,7 @@ export function createKnob(handlers) {
   onDetent = handlers.onDetent;
   knob = el('knob'); rot = el('knobrot'); arc = el('arc');
   dotsG = el('dots'); ticksG = el('ticks'); ph = el('ph'); phTrack = el('phtrack');
-  face = el('face'); chordEl = el('chord'); subEl = el('sub');
+  face = el('face'); chordEl = el('chord'); subEl = el('sub'); homeEl = el('knobhome');
 
   for (let i = 0; i < DOTS; i++) {
     const a = (i / DOTS * 360 - 90) * Math.PI / 180;
@@ -69,6 +69,7 @@ export function renderKnob({ detent, hue, live, detentName }) {
   knob.style.setProperty('--rimop', live ? .55 : 0);
   knob.setAttribute('aria-valuenow', String(detent));
   knob.setAttribute('aria-valuetext', detentName);
+  homeEl.dataset.on = detent === 0 ? '1' : '0';
 
   const litCount = Math.round(detent / 12 * DOTS);
   for (let i = 0; i < DOTS; i++) {
