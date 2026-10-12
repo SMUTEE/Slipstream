@@ -70,11 +70,15 @@ gesture starts on a pad and you never actually touch the knob here, so it is a r
 than a control. Pads grow and the transport pins to the bottom of the screen, which means you
 can start a take without scrolling away from the thing you are playing.
 
-**The transform ring is drawn under your finger.** Press a pad and slide, and the eight compass
-positions appear around your thumb with the current one lit. The knob still mirrors it for
-anyone watching, but the hand choosing the chord colour is the hand covering the readout, so
-the choice has to be legible where the hand already is. This is touch only: a mouse has no such
-problem and the knob is in plain sight.
+**The transform ring is drawn at the point of contact.** Press a pad and slide, and the eight
+compass positions appear around your finger or cursor with the current one lit, so you can see
+where you already are before moving.
+
+It is a legend, not a workaround for a hand covering the screen, which is why it shows on a
+desktop too. Without it you have to already know that sliding does anything, and even then the
+eight options are invisible: the knob shows the result, never the menu. Near a screen edge the
+whole cluster shifts to stay visible, which keeps the angular arrangement intact, and that is
+what actually tells you which way to slide.
 
 Everything you are not touching mid-performance, which is sixteen controls, moves into a sheet
 behind the setup button. The grouping is the one the desktop rack already uses.

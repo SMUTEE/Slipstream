@@ -1,13 +1,15 @@
-/* The transform ring, drawn under the finger.
+/* The transform ring, drawn at the point of contact.
 
-   On a phone the hand that chooses the chord colour is the hand covering the
-   readout. The knob mirrors the choice for anyone watching, but the person
-   playing needs it where they already are. Touch only: a mouse has no such
-   problem and the knob is in plain sight. */
+   It is a legend, not just a way around a hand covering the screen. Without it
+   you have to already know that sliding does anything, and even then the eight
+   options are invisible: the knob shows the result, never the menu. So it shows
+   for a cursor as well as a thumb. */
 
 import { DETENTS, COMPASS } from '../music/detents.js';
 
 const RADIUS = 86;
+const HALF = 115;      /* half the overlay box, for keeping labels on screen */
+const MARGIN = 10;
 let root = null;
 
 function build() {
@@ -30,11 +32,20 @@ function build() {
   document.body.appendChild(root);
 }
 
-export function showRing(x, y) {
+/**
+ * @param current the detent already selected, highlighted so you can see where
+ *                you are before moving. -1 when it has no compass position.
+ */
+export function showRing(x, y, current) {
   if (!root) build();
-  root.style.left = x + 'px';
-  root.style.top = y + 'px';
-  highlight(-1);
+  /* Clamp the box to the viewport. Pads near an edge would otherwise push
+     labels off screen. Nudging the whole cluster keeps the angular arrangement
+     intact, which is what actually communicates which way to slide. */
+  const cx = Math.min(Math.max(x, HALF + MARGIN), innerWidth - HALF - MARGIN);
+  const cy = Math.min(Math.max(y, HALF + MARGIN), innerHeight - HALF - MARGIN);
+  root.style.left = cx + 'px';
+  root.style.top = cy + 'px';
+  highlight(COMPASS.indexOf(current));
   root.classList.add('on');
 }
 

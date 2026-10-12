@@ -161,7 +161,8 @@ createKnob({
 createPads({
   onPlay: play,
   onDetent: setDetent,
-  onRelease: release
+  onRelease: release,
+  currentDetent: () => S.detent
 });
 createControls({
   onHarmony:  () => { renderPads(romans(), S.degree); reflow(); renderLayers(); save(); },

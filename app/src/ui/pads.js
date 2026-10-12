@@ -8,7 +8,7 @@ import { showRing, highlight, hideRing } from './thumbring.js';
 
 let root, gesture = null;
 
-export function createPads({ onPlay, onDetent, onRelease }) {
+export function createPads({ onPlay, onDetent, onRelease, currentDetent }) {
   root = el('pads');
   for (let d = 0; d < 7; d++) {
     const b = document.createElement('button');
@@ -24,8 +24,8 @@ export function createPads({ onPlay, onDetent, onRelease }) {
   root.addEventListener('pointerdown', e => {
     const pad = e.target.closest('.pad');
     if (!pad) return;
-    gesture = { x: e.clientX, y: e.clientY, touch: e.pointerType === 'touch' };
-    if (gesture.touch) showRing(e.clientX, e.clientY);
+    gesture = { x: e.clientX, y: e.clientY };
+    showRing(e.clientX, e.clientY, currentDetent());
     try { pad.setPointerCapture(e.pointerId); } catch (err) {}
     onPlay(+pad.dataset.d);
     e.preventDefault();
@@ -33,7 +33,7 @@ export function createPads({ onPlay, onDetent, onRelease }) {
   root.addEventListener('pointermove', e => {
     if (!gesture) return;
     const zone = zoneFor(e.clientX - gesture.x, e.clientY - gesture.y);
-    if (gesture.touch) highlight(zone);
+    highlight(zone);
     onDetent(zone < 0 ? 0 : COMPASS[zone]);
   });
   const up = () => { if (!gesture) return; gesture = null; hideRing(); onRelease(); };

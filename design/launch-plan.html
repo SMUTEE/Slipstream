@@ -34,6 +34,10 @@ header{padding-block:52px 0}
 header .lede{font-size:17px;margin-top:16px}
 
 .alarm{margin-top:30px;border:1px solid rgba(255,77,94,.3);border-radius:16px;background:rgba(255,77,94,.05);padding:20px 22px}
+.alarm.live{border-color:rgba(73,180,154,.3);background:rgba(73,180,154,.05)}
+.alarm.live h3{color:#7FD6BE}
+.alarm.live p{color:#CFE6DE}
+.alarm.live code{background:rgba(0,0,0,.35);color:#B8E6D8}
 .alarm h3{color:#FF8A95;margin-bottom:7px}
 .alarm p{color:#E4C8CC;margin-bottom:9px}
 .alarm p:last-child{margin-bottom:0}
@@ -102,14 +106,20 @@ td b{font-weight:500}
   circulation. Impressions are not the goal, and optimising for them will produce worse content.</p>
 </header>
 
-<div class="alarm">
-  <h3>Step zero, before any of this runs</h3>
-  <p>There is no public URL. Every post below needs a link and right now there is nothing to link to.
-  The artifact is private and the repo has Pages switched off.</p>
-  <p><b>Settings, Pages, source <code>main</code> / root.</b> That gives you
-  <code>smutee.github.io/Slipstream/</code> in about a minute. Buy a short domain if you want the
-  posts to look less like a side project, but do not block the launch on it.</p>
-  <p>Then make three seed loops and save their codes. You cannot ask people to pass a loop if you
+<div class="alarm live">
+  <h3>It is live</h3>
+  <p><b><a href="https://slipstream-smute.vercel.app">slipstream-smute.vercel.app</a></b> is public
+  and serving. Vercel deploys it on every push, modules load, audio runs at 5 ms, and a share link
+  round-trips through a real address. The phone layout fits one screen with the record button pinned.</p>
+  <p>Use the root URL in posts, because the landing page gives a proper link preview and is one tap
+  from Play. Use <code>/app/</code> for bio links, where saving a tap matters more than a preview.</p>
+  <p>Three things left before you post, none of them large:</p>
+  <p>1. <b>Open it on your own iPhone and press a pad.</b> Everything so far was Chrome with touch
+  emulation. If the first note is late or silent on iOS Safari, you want to know before you send
+  traffic, not after.<br>
+  2. <b>Turn on Vercel Analytics</b> (project, Analytics, Enable). Free, and it gives you the
+  referrer breakdown that tells you which platform actually sent people.<br>
+  3. <b>Make three seed loops and save their codes.</b> You cannot ask people to pass a loop if you
   have not passed one first.</p>
 </div>
 
@@ -171,11 +181,14 @@ td b{font-weight:500}
     <div class="card"><span class="n">ASSET 2</span><b>The 7 second hook</b><span>Cut from 0:09 to 0:16 of the hero. Slide, chord morph, glow. This is the TikTok and Reels opener and it has to work muted, so the knob movement must carry it.</span></div>
     <div class="card"><span class="n">ASSET 3</span><b>Carousel case study</b><span>Nine slides from work you already have: three interaction models, three visual directions, the knob that won, the control surface before and after. LinkedIn and IG.</span></div>
     <div class="card"><span class="n">ASSET 4</span><b>Three seed loops</b><span>One Afrobeats-leaning, one ambient, one sparse. Save the codes. These are what you hand people to remix.</span></div>
-    <div class="card"><span class="n">ASSET 5</span><b>A proper OG image</b><span>Link previews are most of your click-through on X and LinkedIn. The knob, mid-glow, on black, with the name. One hour of work that multiplies everything else.</span></div>
+    <div class="card"><span class="n">ASSET 5</span><b>A custom domain, optional</b><span>Vercel makes this a five minute job and it turns the share link into something you are happy to read aloud. Nice to have, not a blocker.</span></div>
+    <div class="card"><span class="n">ASSET 6</span><b>A proper OG image</b><span>Link previews are most of your click-through on X and LinkedIn. The knob, mid-glow, on black, with the name. One hour of work that multiplies everything else.</span></div>
   </div>
-  <div class="note"><b>The one technical thing to add first.</b> Put a per-channel short link on every post
-  so you can tell where openings came from. The share token lives in the URL fragment, which never
-  reaches a server, so without short links you will be flying blind on the only metric that matters.</div>
+  <div class="note"><b>The one technical thing to add first.</b> Switch on Vercel Analytics. It is free
+  and gives you visits by referrer, which is how you tell TikTok from X. It will not tell you how many
+  people opened a <em>shared arrangement</em>, because the token lives in the URL fragment and a fragment
+  never reaches a server. Count those from tags and replies instead, by hand. It is the number that
+  matters most and the only one you have to gather yourself.</div>
 </section>
 
 <section>
@@ -183,15 +196,15 @@ td b{font-weight:500}
   <h2>Three weeks</h2>
   <div class="tbl"><table>
     <tr><th>When</th><th>Do</th><th>Where</th><th>Depends on</th></tr>
-    <tr><td class="m">Week 0, Mon</td><td><b>Enable Pages, get the URL live</b></td><td class="m">repo</td><td class="m">nothing</td></tr>
-    <tr><td class="m">Week 0, Tue</td><td>Record the hero take. Cut the 7 second hook.</td><td class="m">—</td><td class="m">URL live</td></tr>
-    <tr><td class="m">Week 0, Wed</td><td>OG image, three seed loops, short links</td><td class="m">—</td><td class="m">URL live</td></tr>
+    <tr><td class="m">Week 0, Mon</td><td><b>Open it on a real iPhone.</b> Turn on Vercel Analytics.</td><td class="m">phone, Vercel</td><td class="m">nothing</td></tr>
+    <tr><td class="m">Week 0, Tue</td><td>Record the hero take. Cut the 7 second hook.</td><td class="m">—</td><td class="m">iOS check</td></tr>
+    <tr><td class="m">Week 0, Wed</td><td>OG image, three seed loops, short links</td><td class="m">—</td><td class="m">iOS check</td></tr>
     <tr><td class="m">Week 0, Thu</td><td>Build the carousel from existing design work</td><td class="m">—</td><td class="m">—</td></tr>
     <tr><td class="m">Week 1, Tue</td><td><b>Launch: hero video</b></td><td class="m">X, LinkedIn, TikTok, IG Reel</td><td class="m">all assets</td></tr>
     <tr><td class="m">Week 1, Tue</td><td>Technical thread, two hours after the video</td><td class="m">X</td><td class="m">launch post live</td></tr>
     <tr><td class="m">Week 1, Wed</td><td>The process case study</td><td class="m">LinkedIn</td><td class="m">carousel</td></tr>
     <tr><td class="m">Week 1, Thu</td><td>"You don't need music theory" explainer</td><td class="m">TikTok, Reels</td><td class="m">—</td></tr>
-    <tr><td class="m">Week 1, Fri</td><td>Post to r/WeAreTheMusicMakers, Hacker News Show HN, Lobsters</td><td class="m">communities</td><td class="m">URL live</td></tr>
+    <tr><td class="m">Week 1, Fri</td><td>Post to r/WeAreTheMusicMakers, Hacker News Show HN, Lobsters</td><td class="m">communities</td><td class="m">iOS check</td></tr>
     <tr><td class="m">Week 2, Mon</td><td><b>Launch the relay</b> with your first seed loop</td><td class="m">all four</td><td class="m">seed loops</td></tr>
     <tr><td class="m">Week 2, Wed</td><td>The engineering honesty post</td><td class="m">LinkedIn, X</td><td class="m">—</td></tr>
     <tr><td class="m">Week 2, Thu</td><td>Repost the best relay entries. This is the whole point.</td><td class="m">all four</td><td class="m">entries exist</td></tr>
@@ -205,8 +218,8 @@ td b{font-weight:500}
 <section>
   <div class="lab">The posts</div>
   <h2>Copy, ready to paste</h2>
-  <p class="lede">Written per platform rather than cross-posted. Replace <em>LINK</em> with the
-  channel's short link.</p>
+  <p class="lede">Written per platform rather than cross-posted. Links are live as written. Bio links
+  should point at <em>slipstream-smute.vercel.app/app/</em> to skip a tap.</p>
 
   <div class="post">
     <header><span class="pf x">X</span><span class="ttl">Launch</span><span class="meta">+ hero video</span>
@@ -217,7 +230,7 @@ seven buttons. they're scale degrees, not chords, so they keep working when you 
 
 no install, no signup, no account. free.
 
-LINK</pre>
+slipstream-smute.vercel.app</pre>
     <div class="why"><b>Why this works.</b> Lowercase, flat, no adjectives about how great it is. The
     second paragraph is three mechanics in three clauses, which is what a music-tech person on X actually
     wants. The video carries everything else.</div>
@@ -241,7 +254,7 @@ LINK</pre>
 7/ tests run against the real modules, not a copy. 4,032 chord combinations, 3,000 randomised codec round trips, and three assertions that music/ never touches the dom.
 
 repo: github.com/SMUTEE/Slipstream
-play: LINK</pre>
+play: slipstream-smute.vercel.app</pre>
     <div class="why"><b>Why this works.</b> Post 5 admits a bug. That single line is what makes a
     technical thread feel like a person rather than a changelog, and it is usually the most quoted one.</div>
   </div>
@@ -251,11 +264,11 @@ play: LINK</pre>
       <button class="copy" data-c="3">Copy</button></header>
     <pre id="c3">this is a song:
 
-3002o4012gc-0000000ao40334ao50668ao3399cao
+3912o4001gc-0000000ao60334ao53668ao4699cao
 
-paste it into LINK and you'll hear exactly what i made. then change the key and it's yours.
+paste that into slipstream-smute.vercel.app/app/ and you'll hear exactly what i made. Am, G, Fmaj7, Esus4.
 
-38 characters. no server, no account, no file.</pre>
+then change the key and it's yours. 42 characters. no server, no account, no file.</pre>
     <div class="why"><b>Why this works.</b> It looks like nonsense until you try it, which is the entire
     reason to click. Use a real token from a loop you actually like.</div>
   </div>
@@ -279,7 +292,7 @@ What I changed in how I work: before building, I now write out the exact object 
 
 The instrument is free and runs in a browser tab. Seven buttons, any key, no music theory needed.
 
-LINK</pre>
+slipstream-smute.vercel.app</pre>
     <div class="why"><b>Why this works.</b> Opens with a number and an admission, no greeting, no hook
     question. The takeaway is a method someone can use tomorrow, which is what gets LinkedIn posts saved
     rather than just liked. The product link is last and small.</div>
@@ -302,7 +315,7 @@ The second thing mattered more. The app was one large file with functions reassi
 
 The bug was a bad line of code. The reason it was hard to find was the architecture around it.
 
-LINK</pre>
+slipstream-smute.vercel.app</pre>
     <div class="why"><b>Why this works.</b> A specific debugging story with a real mechanism, and a
     conclusion that is not "test more". Engineers share this kind of post; it is the one most likely to
     travel beyond your own network.</div>
@@ -372,7 +385,8 @@ i started it. you finish it. 🎛️
 open the link, add ONE layer, post it, tag me
 #passtheloop #musicproducer #beatmaker #afrobeats #collab
 
-PINNED COMMENT: the code is 3002o4012gc-0000000ao40334ao50668ao3399cao if the link doesn't open</pre>
+PINNED COMMENT: if the link won't open, go to slipstream-smute.vercel.app/app/ , hit Share, and paste this in:
+3912o4001gc-0000000ao60334ao53668ao4699cao</pre>
     <div class="why"><b>Why this works.</b> It is a duet chain that costs the participant almost nothing,
     and every entry is a working demo of your product made by someone else. Stitching entries is the
     engine: it rewards participation visibly, which is what makes the second wave bigger than the first.</div>
@@ -427,7 +441,7 @@ free, in your browser. link in bio.
   <div class="tbl"><table>
     <tr><th>Metric</th><th>Target, 3 weeks</th><th>How</th></tr>
     <tr><td><b>Loops passed</b> (relay entries)</td><td class="m">25 to 100</td><td class="m">tag and hashtag count, manual</td></tr>
-    <tr><td><b>Short link clicks</b>, split by channel</td><td class="m">3,000 to 10,000</td><td class="m">Dub or Bitly, one link per post</td></tr>
+    <tr><td><b>Visits</b>, split by referrer</td><td class="m">3,000 to 10,000</td><td class="m">Vercel Analytics, free tier</td></tr>
     <tr><td>Repo stars</td><td class="m">150 to 600</td><td class="m">GitHub</td></tr>
     <tr><td>Best single video</td><td class="m">50k to 500k</td><td class="m">platform native</td></tr>
     <tr><td>Follower growth</td><td class="m">secondary, ignore week 1</td><td class="m">platform native</td></tr>
@@ -442,7 +456,7 @@ free, in your browser. link in bio.
   <div class="lab">Risks</div>
   <h2>Three things most likely to go wrong</h2>
   <div class="rows">
-    <div class="rw"><b>It has never run on a phone</b><div>Most of this plan drives mobile traffic from TikTok and Instagram to a web app that has only been tested in an emulated viewport. If iOS Safari handles the audio badly, you will burn your best launch moment sending people to a broken first impression. <strong>Test on a real phone before week 0 ends. This is the biggest risk in the plan.</strong></div></div>
+    <div class="rw"><b>iOS Safari audio is untested</b><div>The phone layout is built and verified: one screen, record pinned, transform ring under the thumb. What is still unknown is the audio on a real iPhone, specifically cold-start latency and the unlock gesture, because every test so far was Chrome with touch emulation. TikTok and Instagram will deliver most of your first traffic on exactly that device. <strong>Press a pad on your own phone before you post. It is the last unknown and it takes a minute.</strong></div></div>
     <div class="rw"><b>The relay needs a first push</b><div>A challenge with no entries looks dead and stays dead. Get three friends to post entries in the first twenty four hours so the hashtag is never empty. This is normal and everyone does it.</div></div>
     <div class="rw"><b>Dev audiences and producer audiences do not mix</b><div>The X thread that lands with developers is noise to a beatmaker, and the opposite. Do not cross-post. Keep the accounts' voices separate even though they are the same person.</div></div>
   </div>
@@ -452,8 +466,8 @@ free, in your browser. link in bio.
   <div class="lab">If you only do four things</div>
   <h2>The short version</h2>
   <div class="grid">
-    <div class="card"><span class="n">01</span><b>Enable Pages today</b><span>One minute. Nothing else can start until there is a link.</span></div>
-    <div class="card"><span class="n">02</span><b>Test it on your phone</b><span>Before you point a single viewer at it.</span></div>
+    <div class="card"><span class="n">01</span><b>Press a pad on your iPhone</b><span>The last unknown. One minute, and it either clears the launch or changes it.</span></div>
+    <div class="card"><span class="n">02</span><b>Turn on Vercel Analytics</b><span>Free. Without it you cannot tell which platform sent anyone.</span></div>
     <div class="card"><span class="n">03</span><b>Record the 45 second hero</b><span>Every other asset is a cut of it.</span></div>
     <div class="card"><span class="n">04</span><b>Run the relay</b><span>It is the only part of this that compounds.</span></div>
   </div>
