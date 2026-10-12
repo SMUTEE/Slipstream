@@ -236,6 +236,18 @@ input[type=range]::-moz-range-thumb{width:15px;height:15px;border:0;border-radiu
 .savedot{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--hue);opacity:0;transition:opacity .3s;margin-left:auto}
 .savedot.on{opacity:.85}
 
+/* the transform ring, under the finger */
+.thumbring{position:fixed;width:230px;height:230px;margin:-115px 0 0 -115px;pointer-events:none;
+  z-index:70;opacity:0;transition:opacity .12s}
+.thumbring.on{opacity:1}
+.thumbring .tr-centre{position:absolute;left:50%;top:50%;width:56px;height:56px;margin:-28px 0 0 -28px;
+  border-radius:50%;border:1px dashed rgba(130,170,255,.28)}
+.thumbring .tr-z{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);white-space:nowrap;
+  font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;
+  padding:4px 8px;border-radius:8px;background:rgba(7,10,17,.94);border:1px solid var(--line);color:var(--fg-dim)}
+.thumbring .tr-z.hot{background:var(--hue);border-color:var(--hue);color:var(--void);font-weight:500;
+  box-shadow:0 0 18px -4px var(--hue)}
+
 @media (max-width:640px){
   .keymap{display:none}
 
@@ -247,6 +259,71 @@ input[type=range]::-moz-range-thumb{width:15px;height:15px;border:0;border-radiu
   .tl{flex:0 0 40px}
   .tv{flex:0 0 48px}
 }
+/* ---------- phone layout ----------
+   The gesture starts on a pad, so the knob is a readout here and does not need
+   the room. Transport pins to the thumb arc; everything else goes in a sheet. */
+#sheet{display:contents}
+#mbar,#sheetbg,.sheetgrab,.gear,.laydots{display:none}
+
+/* the transform ring, under the finger */
+.thumbring{position:fixed;width:230px;height:230px;margin:-115px 0 0 -115px;pointer-events:none;
+  z-index:70;opacity:0;transition:opacity .12s}
+.thumbring.on{opacity:1}
+.thumbring .tr-centre{position:absolute;left:50%;top:50%;width:56px;height:56px;margin:-28px 0 0 -28px;
+  border-radius:50%;border:1px dashed rgba(130,170,255,.28)}
+.thumbring .tr-z{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);white-space:nowrap;
+  font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;
+  padding:4px 8px;border-radius:8px;background:rgba(7,10,17,.94);border:1px solid var(--line);color:var(--fg-dim)}
+.thumbring .tr-z.hot{background:var(--hue);border-color:var(--hue);color:var(--void);font-weight:500;
+  box-shadow:0 0 18px -4px var(--hue)}
+
+@media (max-width:640px){
+  .keymap{display:none}
+  .foot{display:none}
+  header{padding-block:18px 0}
+  header h1{font-size:30px}
+  header p{display:none}
+  .stage{padding-block:12px 2px}
+  .module{width:min(286px,76vw)}
+  .pads{grid-template-columns:repeat(4,1fr);gap:7px;margin-top:18px}
+  .pad{aspect-ratio:auto;min-height:116px;border-radius:16px}
+  .pad .n{font-size:19px}
+  .wrap{padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+  body{overscroll-behavior-y:contain}
+
+  #mbar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:50;align-items:center;gap:9px;
+    background:rgba(7,10,17,.97);backdrop-filter:blur(14px);border-top:1px solid var(--line);
+    padding:9px 14px calc(9px + env(safe-area-inset-bottom,0px))}
+  #mbar .tprimary{gap:9px;flex:1 1 auto;flex-wrap:nowrap;min-width:0}
+  #mbar .rec{width:44px;height:44px}
+  #mbar .chip.run{height:44px;min-width:0;padding:0 15px}
+  #mbar .clock{margin-left:auto;flex:0 0 auto}
+  #mbar .clock b{font-size:17px}
+  #mbar .clock span{font-size:5.5px;letter-spacing:.1em}
+  .gear{display:grid;place-items:center;flex:0 0 auto;width:44px;height:44px;border-radius:12px;
+    border:1px solid var(--line);background:linear-gradient(170deg,#131A2B,#0A0E18);color:var(--fg-dim);
+    font-size:17px;cursor:pointer;line-height:1}
+  .gear[aria-expanded="true"]{color:var(--void);background:var(--hue);border-color:var(--hue)}
+  .laydots{display:flex;gap:4px;flex:0 0 auto}
+  .laydots b{width:7px;height:7px;border-radius:50%;background:#1C2434;display:block}
+
+  #sheetbg{display:block;position:fixed;inset:0;z-index:55;background:rgba(3,5,9,.62);
+    opacity:0;pointer-events:none;transition:opacity .25s}
+  #sheetbg.open{opacity:1;pointer-events:auto}
+  #sheet{display:block;position:fixed;left:0;right:0;bottom:0;top:15%;z-index:60;overflow-y:auto;
+    background:linear-gradient(180deg,#0F1523,#070A11);border-top:1px solid var(--line);
+    border-radius:22px 22px 0 0;box-shadow:0 -26px 60px -22px #000;
+    padding:10px 16px calc(24px + env(safe-area-inset-bottom,0px));
+    transform:translateY(102%);transition:transform .28s cubic-bezier(.3,.9,.35,1);
+    overscroll-behavior:contain}
+  #sheet.open{transform:none}
+  .sheetgrab{display:block;width:34px;height:4px;border-radius:4px;background:#2A3346;margin:2px auto 14px}
+  #sheet .rack{margin-top:0;padding-block:0 16px;border-top:0}
+  #sheet .loop{margin-top:16px}
+  #sheet .loopcard{padding:14px}
+  #sheet .tsecondary{padding-top:0;border-top:0}
+}
+
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 
@@ -279,6 +356,9 @@ input[type=range]::-moz-range-thumb{width:15px;height:15px;border:0;border-radiu
 
 <div class="pads" id="pads"></div>
 
+<div id="sheetbg"></div>
+<div id="sheet">
+  <div class="sheetgrab" id="sheetgrab"></div>
 <div class="rack">
   <div class="row rowa">
     <label class="field"><span>Key</span><select id="keysel"></select></label>
@@ -310,7 +390,9 @@ input[type=range]::-moz-range-thumb{width:15px;height:15px;border:0;border-radiu
     <div class="tprimary">
       <button class="rec" id="recbtn" aria-pressed="false" aria-label="Record"><i></i></button>
       <button class="chip run" id="runbtn" aria-pressed="false">Play</button>
+      <span class="laydots" id="laydots"></span>
       <div class="clock" id="clock" data-rec="0"><b id="clockmain">—</b><span id="clocksub">stopped</span></div>
+      <button class="gear" id="gearbtn" aria-expanded="false" aria-controls="sheet" aria-label="Setup">⚙</button>
     </div>
     <div class="tsecondary">
       <label class="minifield"><span>Presets</span><select id="presetsel" aria-label="Load a preset"><option value="">load…</option></select></label>
@@ -336,6 +418,9 @@ input[type=range]::-moz-range-thumb{width:15px;height:15px;border:0;border-radiu
     <div class="empty" id="loopempty"></div>
   </div>
 </section>
+
+</div>
+<div id="mbar"></div>
 
 <section class="keymap">
   <div class="lab">Knob on a keyboard</div>

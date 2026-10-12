@@ -4,6 +4,7 @@ import { el } from './dom.js';
 import { SOUNDS } from '../audio/sounds.js';
 import { LP, MAX_LAYERS } from '../state/store.js';
 import { PRESETS } from '../loop/recorder.js';
+import { renderLayerDots } from './mobile.js';
 
 let cb = {};
 
@@ -132,5 +133,6 @@ export function renderLayers() {
     'beats rather than notes and seconds, so changing the key transposes everything and changing the ' +
     'tempo moves it all together.';
   el('loopempty').hidden = LP.layers.length > 0;
+  renderLayerDots(LP.layers);
   refreshShare();
 }

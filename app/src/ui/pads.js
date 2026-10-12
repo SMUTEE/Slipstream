@@ -4,6 +4,7 @@
 import { el } from './dom.js';
 import { zoneFor, COMPASS } from '../music/detents.js';
 import { DEGREE_HUES } from '../state/store.js';
+import { showRing, highlight, hideRing } from './thumbring.js';
 
 let root, gesture = null;
 
@@ -23,7 +24,8 @@ export function createPads({ onPlay, onDetent, onRelease }) {
   root.addEventListener('pointerdown', e => {
     const pad = e.target.closest('.pad');
     if (!pad) return;
-    gesture = { x: e.clientX, y: e.clientY };
+    gesture = { x: e.clientX, y: e.clientY, touch: e.pointerType === 'touch' };
+    if (gesture.touch) showRing(e.clientX, e.clientY);
     try { pad.setPointerCapture(e.pointerId); } catch (err) {}
     onPlay(+pad.dataset.d);
     e.preventDefault();
@@ -31,9 +33,10 @@ export function createPads({ onPlay, onDetent, onRelease }) {
   root.addEventListener('pointermove', e => {
     if (!gesture) return;
     const zone = zoneFor(e.clientX - gesture.x, e.clientY - gesture.y);
+    if (gesture.touch) highlight(zone);
     onDetent(zone < 0 ? 0 : COMPASS[zone]);
   });
-  const up = () => { if (!gesture) return; gesture = null; onRelease(); };
+  const up = () => { if (!gesture) return; gesture = null; hideRing(); onRelease(); };
   root.addEventListener('pointerup', up);
   root.addEventListener('pointercancel', up);
 }

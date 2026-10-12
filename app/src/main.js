@@ -32,6 +32,7 @@ import {
   createLoopUI, renderTransport, renderClock, renderLayers, flashLayer, refreshShare
 } from './ui/loopui.js';
 import { bindKeyboard } from './ui/keyboard.js';
+import { initMobile } from './ui/mobile.js';
 
 /* ---------------------------------------------------------------- helpers */
 const hue = () => S.degree === null ? BASE_HUE : DEGREE_HUES[S.degree];
@@ -203,6 +204,7 @@ initRecorder({
   onSaved:     save
 });
 
+initMobile();
 document.addEventListener('pointerdown', unlock, { once: true, capture: true });
 
 S.click = loadClickPref(S.click);

@@ -60,6 +60,29 @@ transport is its own card, with record and play as the only full-size controls i
 
 Dragging the knob and pressing-then-sliding from a pad both work on touch.
 
+## On a phone
+
+The layout changes below 640px, because a desktop works by having your eye in one place and
+your cursor in another, and a phone does not: both are your thumb.
+
+The whole instrument fits one screen. The knob drops to 76% of the width, since the transform
+gesture starts on a pad and you never actually touch the knob here, so it is a readout rather
+than a control. Pads grow and the transport pins to the bottom of the screen, which means you
+can start a take without scrolling away from the thing you are playing.
+
+**The transform ring is drawn under your finger.** Press a pad and slide, and the eight compass
+positions appear around your thumb with the current one lit. The knob still mirrors it for
+anyone watching, but the hand choosing the chord colour is the hand covering the readout, so
+the choice has to be legible where the hand already is. This is touch only: a mouse has no such
+problem and the knob is in plain sight.
+
+Everything you are not touching mid-performance, which is sixteen controls, moves into a sheet
+behind the setup button. The grouping is the one the desktop rack already uses.
+
+The markup is identical at every width. One module moves the transport row between the loop
+card and the pinned bar, and the sheet collapses to `display: contents` on a desktop so it
+disappears from layout entirely.
+
 ## Voicing
 
 Chord identity and voicing are separate concepts, in the code as well as the documentation.
