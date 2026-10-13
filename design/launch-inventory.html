@@ -1,0 +1,338 @@
+<title>Launch Inventory</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;500;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a working checklist. Tick state is kept per browser so progress survives a reload. */
+:root{
+  --void:#050609; --fg:#E9EEF8; --dim:#79839A; --faint:#434B5E;
+  --line:rgba(130,170,255,.10); --hue:#2E9BFF; --warn:#F0A868; --bad:#FF4D5E; --good:#49B49A;
+  --ui:"Manrope",system-ui,sans-serif; --mono:"JetBrains Mono",ui-monospace,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--void);color:var(--fg);font-family:var(--ui);font-weight:300;font-size:15px;line-height:1.66;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.wrap{max-width:860px;margin:0 auto;padding-inline:20px;padding-block:0 90px}
+h1,h2,h3{margin:0;letter-spacing:-.02em;text-wrap:balance}
+h1{font-weight:200;font-size:clamp(32px,6.4vw,52px);line-height:1.03}
+h1 b{font-weight:800;color:var(--hue)}
+h2{font-weight:200;font-size:clamp(22px,3.4vw,30px)}
+h3{font-weight:500;font-size:16.5px}
+p{margin:0 0 13px}
+a{color:var(--hue)}
+code{font-family:var(--mono);font-size:.86em;background:#0E1320;border:1px solid var(--line);border-radius:5px;padding:1px 6px;color:#C7D4EA}
+.lab{font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--faint);margin-bottom:9px}
+section{margin-top:56px}
+.lede{color:var(--dim);max-width:66ch}
+strong{font-weight:500;color:var(--fg)}
+
+header{padding-block:50px 0}
+header .lede{margin-top:14px;font-size:16.5px}
+.counter{margin-top:22px;font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--faint);
+  border:1px solid var(--line);border-radius:999px;padding:7px 15px;display:inline-flex;gap:9px;align-items:center}
+.counter b{color:var(--hue);font-weight:500}
+
+/* checklist */
+.ck{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid rgba(130,170,255,.06);align-items:flex-start}
+.ck:last-child{border-bottom:0}
+.ck input{appearance:none;flex:0 0 auto;width:19px;height:19px;margin-top:3px;border-radius:6px;
+  border:1.5px solid #39425A;background:#0D121F;cursor:pointer;position:relative;transition:all .15s}
+.ck input:checked{background:var(--hue);border-color:var(--hue)}
+.ck input:checked::after{content:"";position:absolute;left:5.5px;top:1.5px;width:5px;height:10px;
+  border:solid var(--void);border-width:0 2px 2px 0;transform:rotate(45deg)}
+.ck input:focus-visible{outline:2px solid var(--hue);outline-offset:2px}
+.ck label{cursor:pointer;flex:1;min-width:0}
+.ck b{font-weight:500;display:block}
+.ck span{display:block;color:var(--dim);font-size:13.5px;margin-top:2px}
+.ck input:checked ~ label{opacity:.42}
+.ck .tag{display:inline-block;font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;
+  border:1px solid var(--line);border-radius:5px;padding:1px 6px;color:var(--faint);margin-left:7px;vertical-align:1px}
+
+.panel{border:1px solid var(--line);border-radius:15px;padding:18px 20px;background:linear-gradient(170deg,#0F1420,#090C14);margin-top:18px}
+.panel.warn{border-color:rgba(240,168,104,.26);background:rgba(240,168,104,.05)}
+.panel.warn h3{color:var(--warn)}
+.panel.bad{border-color:rgba(255,77,94,.26);background:rgba(255,77,94,.05)}
+.panel.bad h3{color:#FF8A95}
+.panel.good{border-color:rgba(73,180,154,.26);background:rgba(73,180,154,.05)}
+.panel.good h3{color:#7FD6BE}
+.panel p:last-child{margin-bottom:0}
+
+/* state card */
+.state{display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:1px;background:var(--line);
+  border:1px solid var(--line);border-radius:13px;overflow:hidden;margin-top:16px}
+.state div{background:#0C1019;padding:11px 13px}
+.state dt{font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);margin:0}
+.state dd{margin:3px 0 0;font-weight:500;font-size:14.5px}
+
+/* shot table */
+.shots{border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-top:16px}
+.shot{display:grid;grid-template-columns:76px 1fr;gap:16px;padding:14px 16px;border-bottom:1px solid rgba(130,170,255,.06)}
+.shot:last-child{border-bottom:0}
+.shot .t{font-family:var(--mono);font-size:11.5px;color:var(--hue);font-variant-numeric:tabular-nums}
+.shot .t em{display:block;font-style:normal;color:var(--faint);font-size:9.5px;letter-spacing:.1em;margin-top:3px}
+.shot .d b{font-weight:500}
+.shot .d{font-size:14px;color:#C3CBDC}
+.shot .d .do{display:block;font-family:var(--mono);font-size:11.5px;color:var(--fg);background:#0B0F18;
+  border-left:2px solid var(--hue);border-radius:0 7px 7px 0;padding:7px 11px;margin-top:7px}
+.shot .d .note{display:block;color:var(--faint);font-size:12.5px;margin-top:6px}
+
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:13px;margin-top:16px}
+table{border-collapse:collapse;width:100%;min-width:560px;font-size:13.5px}
+th,td{text-align:left;padding:10px 14px;border-bottom:1px solid rgba(130,170,255,.06);vertical-align:top}
+th{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);background:#0B0F18;white-space:nowrap}
+tr:last-child td{border-bottom:0}
+td.m{font-family:var(--mono);font-size:12px;color:var(--dim);white-space:nowrap}
+pre{margin:10px 0 0;background:#0B0F18;border:1px solid var(--line);border-radius:10px;padding:12px 14px;
+  overflow-x:auto;font-family:var(--mono);font-size:12px;line-height:1.6;color:#C7D4EA}
+@media (max-width:620px){.shot{grid-template-columns:1fr;gap:6px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+<header>
+  <div class="lab">Production inventory · Slipstream launch</div>
+  <h1>Launch <b>Inventory</b></h1>
+  <p class="lede">Everything to set up, record and capture before the first post goes out, in the
+  order it should happen. Ticks are saved in this browser, so you can work through it across days.</p>
+  <div class="counter"><b id="done">0</b> of <b id="total">0</b> done</div>
+</header>
+
+<div class="panel bad">
+  <h3>Two gates. Nothing else matters until these pass.</h3>
+  <p><strong>1. Play it on your own iPhone.</strong> Every recording below sends people to a phone
+  browser. The audio bug is fixed and you confirmed sound works, so this is now about feel: is the
+  first note late, does the thumb ring track your finger, do the pads feel big enough. If something
+  is wrong, you want to find it before you have an audience, not during.</p>
+  <p><strong>2. Make the three seed loops first.</strong> You cannot run a relay you have not run
+  yourself, and the loops are props in three of the four videos. Everything downstream depends on
+  having them saved.</p>
+</div>
+
+<section>
+  <div class="lab">Phase 0</div>
+  <h2>Setup, about two hours</h2>
+
+  <div class="ck"><input type="checkbox" id="s1"><label for="s1"><b>Play it on your iPhone for ten minutes<span class="tag">gate</span></b><span>Safari, not a wrapped browser. Check: first note latency, the thumb ring following your finger, pad size, the pinned transport, and that the setup sheet opens and closes cleanly. If the ringer switch is off you will hear nothing, so check that first.</span></label></div>
+
+  <div class="ck"><input type="checkbox" id="s2"><label for="s2"><b>Turn on Vercel Analytics</b><span>Vercel dashboard, the slipstream project, Analytics, Enable. Free tier. It gives you visits by referrer, which is the only way you will know whether TikTok or X sent anyone.</span></label></div>
+
+  <div class="ck"><input type="checkbox" id="s3"><label for="s3"><b>Make three seed loops and save their codes<span class="tag">gate</span></b><span>One Afrobeats-leaning, one ambient, one sparse. Record each, hit Share, copy the code into a note with a name. These are what you hand people in the relay.</span></label></div>
+
+  <div class="ck"><input type="checkbox" id="s4"><label for="s4"><b>Set up desktop audio capture</b><span>macOS screen recording does not capture system audio on its own. Install BlackHole 2ch (free), then in Audio MIDI Setup create a Multi-Output Device with BlackHole plus your speakers, and record with that as the input. Without this your desktop video is silent, which for this product is fatal.</span></label></div>
+
+  <div class="ck"><input type="checkbox" id="s5"><label for="s5"><b>Confirm iOS screen recording captures Safari audio</b><span>Control Centre, Screen Recording, long press, microphone off. Record five seconds of a chord and play it back. iOS captures app audio natively, which is why the vertical takes are easier to shoot on the phone than to fake on a desktop.</span></label></div>
+
+  <div class="ck"><input type="checkbox" id="s6"><label for="s6"><b>Prepare a clean browser window</b><span>New profile or guest window. Hide the bookmarks bar, close every other tab, turn on Do Not Disturb, set zoom to 100%, and make the window 1440 by 900 so the instrument sits comfortably. Nothing personal on screen.</span></label></div>
+
+  <div class="ck"><input type="checkbox" id="s7"><label for="s7"><b>Decide the handles you are posting from</b><span>Four accounts, two voices. The X and LinkedIn posts speak to developers and product people; TikTok and Instagram speak to producers. Do not cross-post between those pairs.</span></label></div>
+
+  <div class="ck"><input type="checkbox" id="s8"><label for="s8"><b>Custom domain<span class="tag">optional</span></b><span>Vercel, project, Domains. Five minutes, and it turns the share link into something you are happy to read aloud on camera. Decide before you record, because the URL is visible in every desktop shot.</span></label></div>
+</section>
+
+<section>
+  <div class="lab">Before every take</div>
+  <h2>Set the instrument to this</h2>
+  <p class="lede">Reset to this between takes. Half of a bad take is the app being left in a state
+  from the last one.</p>
+  <div class="state">
+    <div><dt>Key</dt><dd>C</dd></div>
+    <div><dt>Scale</dt><dd>Major</dd></div>
+    <div><dt>Voice</dt><dd>Glass</dd></div>
+    <div><dt>Tempo</dt><dd>96</dd></div>
+    <div><dt>Bars</dt><dd>4</dd></div>
+    <div><dt>Click</dt><dd>Off</dd></div>
+    <div><dt>Slide</dt><dd>On</dd></div>
+    <div><dt>Hold</dt><dd>Off</dd></div>
+    <div><dt>Voicing</dt><dd>Root</dd></div>
+    <div><dt>Octave</dt><dd>0</dd></div>
+    <div><dt>Layers</dt><dd>Cleared</dd></div>
+  </div>
+  <div class="panel">
+    <h3>The compass, so you slide the right way</h3>
+    <pre>        N  triad
+   NW  aug          NE  add9
+ W  maj/min            E  7th
+   SW  sus2        SE  dom7
+        S  sus4</pre>
+    <p style="margin-top:12px">At 96 bpm with 4 bars a loop is <strong>10 seconds</strong> and a take
+    ends itself after one pass. One chord per bar is one every <strong>2.5 seconds</strong>.</p>
+  </div>
+</section>
+
+<section>
+  <div class="lab">Recording 1 of 4</div>
+  <h2>Desktop hero, 45 seconds, 16:9</h2>
+  <p class="lede">The master take. The X and LinkedIn videos are cuts of this, and most of your
+  still frames come out of it. No voiceover, text added in post.</p>
+
+  <div class="shots">
+    <div class="shot"><span class="t">0:00<em>3 SEC</em></span><span class="d"><b>Cold open on sound.</b> A chord already ringing when the video starts.
+      <span class="do">Start recording with pad 1 already held. Release at 0:03.</span>
+      <span class="note">Text in post: "no app. no signup."</span></span></div>
+
+    <div class="shot"><span class="t">0:03<em>6 SEC</em></span><span class="d"><b>Three chords, nothing else moving.</b>
+      <span class="do">Tap pad 1, pad 4, pad 5. About one second apart. Let each ring.</span>
+      <span class="note">Keep the cursor still between taps. Mouse drift is the most common thing that makes a take unusable.</span></span></div>
+
+    <div class="shot"><span class="t">0:09<em>7 SEC</em></span><span class="d"><b>The turn. This is the shot.</b>
+      <span class="do">Press and hold pad 1. Without releasing, drag right to E, then down-right to SE. Readout goes C, Cmaj7, C7. Release.</span>
+      <span class="note">The ring forms under the cursor and lights the option you land on. Drag slowly, roughly one second per move, so it is readable.</span></span></div>
+
+    <div class="shot"><span class="t">0:16<em>7 SEC</em></span><span class="d"><b>Change the key while it rings.</b> The beat nobody expects.
+      <span class="do">Turn <strong>Hold</strong> on. Tap pad 1 and release; the chord sustains. Now change Key from C to E with the mouse. Listen to it glide. Press pad 1 again to stop. Turn Hold off.</span>
+      <span class="note">Hold is necessary here: one pointer cannot both hold a pad and operate the dropdown. Do not try to do it with the keyboard, the dropdown steals focus.</span></span></div>
+
+    <div class="shot"><span class="t">0:23<em>9 SEC</em></span><span class="d"><b>Record a layer.</b>
+      <span class="do">Key back to C. Turn <strong>Click on</strong>. Hit record. Play pads 1, 5, 6, 4, one per bar, every 2.5 seconds. The red ring fills and the take ends itself at 10 seconds.</span>
+      <span class="note">Click on gives you the timing and reads as "recording" on camera. You will turn it off before the final playback.</span></span></div>
+
+    <div class="shot"><span class="t">0:32<em>8 SEC</em></span><span class="d"><b>Stack a bass layer.</b> The point of layers in one move.
+      <span class="do">Change Voice to <strong>Sub</strong>. Hit record again. Play pad 1 and pad 5, two bars each. Let it auto-end.</span>
+      <span class="note">Both layers now loop together, each with its own voice. That is the thing to let land.</span></span></div>
+
+    <div class="shot"><span class="t">0:40<em>5 SEC</em></span><span class="d"><b>The payoff.</b>
+      <span class="do">Turn <strong>Click off</strong>. Let the full loop play two bars clean. Hit Share, click Copy.</span>
+      <span class="note">Text in post: "this link is the song." Hold the last frame three seconds.</span></span></div>
+  </div>
+
+  <div class="ck" style="margin-top:14px"><input type="checkbox" id="r1a"><label for="r1a"><b>Shoot it, three takes minimum</b><span>Take one is always stiff. Expect to use take three.</span></label></div>
+  <div class="ck"><input type="checkbox" id="r1b"><label for="r1b"><b>Check the audio actually recorded</b><span>Play it back before you move on. A silent 45 second take you discover tomorrow is the worst outcome on this list.</span></label></div>
+</section>
+
+<section>
+  <div class="lab">Recording 2 of 4</div>
+  <h2>Vertical hero, 30 seconds, 9:16</h2>
+  <p class="lede">Shoot this on the phone, not as a crop of the desktop take. A 16:9 crop cuts off
+  pads 1 and 7, and the phone has the one thing desktop does not: the ring under your thumb.</p>
+
+  <div class="shots">
+    <div class="shot"><span class="t">0:00<em>4 SEC</em></span><span class="d"><b>Thumb on a pad, chord rings.</b>
+      <span class="do">Start recording, then press pad 1 with your thumb and hold.</span></span></div>
+    <div class="shot"><span class="t">0:04<em>8 SEC</em></span><span class="d"><b>Slide. The ring forms under your thumb.</b> This is the vertical hero shot and it does not exist on desktop.
+      <span class="do">Without lifting, slide right, then down-right. Hold each a beat so the lit label is readable.</span></span></div>
+    <div class="shot"><span class="t">0:12<em>6 SEC</em></span><span class="d"><b>Three chords in the thumb arc.</b>
+      <span class="do">Tap 1, 5, 6. Keep the phone steady, do not reframe.</span></span></div>
+    <div class="shot"><span class="t">0:18<em>12 SEC</em></span><span class="d"><b>Record a loop without leaving the screen.</b>
+      <span class="do">Hit the red button in the pinned bar. Play four chords. Watch the counter run down and the ring close.</span>
+      <span class="note">The point being made here is that you never scrolled. Do not open the setup sheet during this take.</span></span></div>
+  </div>
+
+  <div class="ck" style="margin-top:14px"><input type="checkbox" id="r2a"><label for="r2a"><b>Shoot on the phone with iOS screen recording</b><span>Microphone off. Do Not Disturb on, so no banner lands mid-take.</span></label></div>
+  <div class="ck"><input type="checkbox" id="r2b"><label for="r2b"><b>Cut the 7 second hook from 0:04 to 0:11</b><span>Slide, ring, chord morph. This is the TikTok and Reels opener and it must work muted, so the ring movement has to carry it alone.</span></label></div>
+</section>
+
+<section>
+  <div class="lab">Recording 3 of 4</div>
+  <h2>The explainer, 30 seconds, 9:16</h2>
+  <p class="lede">Talking. The highest-reaching of the four, because teaching content travels past
+  people who would never search for a chord tool.</p>
+  <div class="panel">
+    <p style="font-family:var(--mono);font-size:13px;line-height:1.75;color:#C7D4EA;margin:0">
+    "Chords aren't hard. The names are hard.<br><br>
+    Nobody says 'play B minor seven flat five'. What they mean is 'play the seventh one'.<br><br>
+    So I made the buttons the numbers. <em style="color:var(--hue)">[play 1, 4, 5, 6]</em><br><br>
+    That's a progression. I never said a chord name and neither did you.<br><br>
+    Change the key. <em style="color:var(--hue)">[change to E]</em> Same buttons. Still works.<br><br>
+    Free, in your browser. Link in bio."</p>
+  </div>
+  <div class="ck" style="margin-top:14px"><input type="checkbox" id="r3a"><label for="r3a"><b>Record the screen, voice over it after</b><span>Easier than filming yourself and the screen together, and the audio is cleaner. Record the playing first, then narrate to it.</span></label></div>
+  <div class="ck"><input type="checkbox" id="r3b"><label for="r3b"><b>Burn in captions</b><span>Most of TikTok watches muted. The script above is the caption.</span></label></div>
+</section>
+
+<section>
+  <div class="lab">Recording 4 of 4</div>
+  <h2>The relay, 20 seconds, 9:16</h2>
+  <p class="lede">The one that compounds. Shoot it after the launch has run a few days, not on day one.</p>
+  <div class="ck"><input type="checkbox" id="r4a"><label for="r4a"><b>Play seed loop one, then ask</b><span>"I made four bars. I'm not finishing it. Open the link, add one layer, post yours and tag me."</span></label></div>
+  <div class="ck"><input type="checkbox" id="r4b"><label for="r4b"><b>Pin the code as a comment</b><span>In case the bio link fails for anyone. Use the real code from your seed loop.</span></label></div>
+  <div class="ck"><input type="checkbox" id="r4c"><label for="r4c"><b>Line up three friends to post entries in the first day</b><span>A challenge with no entries looks dead and stays dead. Everyone seeds the first wave; it is not cheating.</span></label></div>
+</section>
+
+<section>
+  <div class="lab">Stills</div>
+  <h2>Screenshots to capture</h2>
+
+  <div class="panel warn">
+    <h3>Two of these live only in git history</h3>
+    <p>The rejected design studies are not on the site any more, which is correct, but the carousel
+    needs them. Pull them out to a temporary file and screenshot from there:</p>
+    <pre>git show 86ada28:prototypes/chord-ui-options.html &gt; /tmp/seven-degrees.html
+git show 86ada28:prototypes/waon-three-ways.html  &gt; /tmp/waon.html
+python3 devserver.py 8899     # then open /tmp paths, or copy them into app/ temporarily</pre>
+    <p>The private artifacts for both are also still on your Claude account if that is quicker.</p>
+  </div>
+
+  <div class="ck" style="margin-top:20px"><input type="checkbox" id="p1"><label for="p1"><b>OG image, 1200 by 630</b><span>The knob mid-glow on black with the name. This is most of your click-through on X and LinkedIn, where the link preview does the selling. One hour of work that multiplies every post.</span></label></div>
+
+  <div class="ck"><input type="checkbox" id="p2"><label for="p2"><b>Carousel slide 1, the title</b><span>"I tested three ways to play a chord before I picked one"</span></label></div>
+  <div class="ck"><input type="checkbox" id="p3"><label for="p3"><b>Slides 2 to 4, the three interaction models</b><span>From <code>/tmp/seven-degrees.html</code>: the Bench with its separate puck, the Halo ring, the Lane timeline. Screenshot each rig, mark two of them rejected.</span></label></div>
+  <div class="ck"><input type="checkbox" id="p4"><label for="p4"><b>Slides 5 to 8, the three Japanese directions</b><span>From <code>/tmp/waon.html</code>: the Showa toy console, the festival lanterns, the ink seals. Plus a title slide, "then I tested three visual directions".</span></label></div>
+  <div class="ck"><input type="checkbox" id="p5"><label for="p5"><b>Slide 9, the knob that won</b><span>"None of them won. This did." A clean frame of the current instrument, mid-glow.</span></label></div>
+  <div class="ck"><input type="checkbox" id="p6"><label for="p6"><b>Control surface before and after<span class="tag">optional</span></b><span>For the LinkedIn process post. The before is at <code>git show 6ad3232~1:prototypes/slipstream.html</code>, twenty controls in two ragged rows. The after is the current rack. A strong pair if you want a tenth slide.</span></label></div>
+
+  <div class="ck"><input type="checkbox" id="p7"><label for="p7"><b>Three product stills pulled from the hero video</b><span>Export frames rather than taking fresh screenshots: the ring mid-slide, the red take ring half full, two layers listed. Frames from the video already have the right crop and glow.</span></label></div>
+
+  <div class="ck"><input type="checkbox" id="p8"><label for="p8"><b>One mobile still, 1080 by 1920</b><span>The phone layout with the thumb ring open. Proves the mobile claim in the posts without needing a video.</span></label></div>
+</section>
+
+<section>
+  <div class="lab">Specs</div>
+  <h2>Sizes and where each asset lands</h2>
+  <div class="tbl"><table>
+    <tr><th>Asset</th><th>Size</th><th>Goes to</th></tr>
+    <tr><td><b>Desktop hero</b>, 45s</td><td class="m">1920×1080</td><td>X launch post, LinkedIn</td></tr>
+    <tr><td><b>Vertical hero</b>, 30s</td><td class="m">1080×1920</td><td>TikTok, Reels</td></tr>
+    <tr><td><b>7 second hook</b></td><td class="m">1080×1920</td><td>TikTok opener, Reels, Stories</td></tr>
+    <tr><td><b>Explainer</b>, 30s</td><td class="m">1080×1920</td><td>TikTok, Reels</td></tr>
+    <tr><td><b>Relay</b>, 20s</td><td class="m">1080×1920</td><td>all four, week 2</td></tr>
+    <tr><td><b>Carousel</b>, 9 slides</td><td class="m">1080×1350</td><td>Instagram; same art as PDF for LinkedIn</td></tr>
+    <tr><td><b>OG image</b></td><td class="m">1200×630</td><td>link previews everywhere</td></tr>
+    <tr><td><b>Mobile still</b></td><td class="m">1080×1920</td><td>Stories, thread images</td></tr>
+  </table></div>
+</section>
+
+<section>
+  <div class="lab">Do not film</div>
+  <h2>Things that ruin a take</h2>
+  <div class="ck"><input type="checkbox" id="d1"><label for="d1"><b>Notifications</b><span>Do Not Disturb on both machine and phone before you press record.</span></label></div>
+  <div class="ck"><input type="checkbox" id="d2"><label for="d2"><b>Other tabs, bookmarks, personal anything</b><span>Guest window. Your tab titles say more about you than you think.</span></label></div>
+  <div class="ck"><input type="checkbox" id="d3"><label for="d3"><b>A share link with a long token in the address bar</b><span>Reload to the clean URL before you start, or the URL bar reads as noise for the whole take.</span></label></div>
+  <div class="ck"><input type="checkbox" id="d4"><label for="d4"><b>Leftover layers from a previous take</b><span>Hit Clear. A stray third layer playing under your demo is confusing and you will not notice until the edit.</span></label></div>
+  <div class="ck"><input type="checkbox" id="d5"><label for="d5"><b>The click running under the final playback</b><span>Turn it off before the payoff shot. It is a working aid, not part of the music.</span></label></div>
+</section>
+
+<div class="panel good" style="margin-top:50px">
+  <h3>The shortest useful version</h3>
+  <p>If you only get one evening: play it on your phone, make one seed loop, shoot the vertical
+  hero, and cut the seven second hook out of it. That is enough to post on TikTok and Instagram,
+  which is where the first traffic comes from. The desktop take and the carousel can follow a
+  few days later without hurting anything.</p>
+</div>
+</div>
+
+<script>
+const KEY = 'slipstream.inventory';
+const boxes = [...document.querySelectorAll('.ck input')];
+const done = document.getElementById('done');
+const total = document.getElementById('total');
+total.textContent = boxes.length;
+
+let saved = {};
+try { saved = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) {}
+
+function count() {
+  done.textContent = boxes.filter(b => b.checked).length;
+}
+boxes.forEach(b => {
+  if (saved[b.id]) b.checked = true;
+  b.addEventListener('change', () => {
+    saved[b.id] = b.checked;
+    try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch (e) {}
+    count();
+  });
+});
+count();
+</script>

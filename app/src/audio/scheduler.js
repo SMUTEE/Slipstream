@@ -7,7 +7,8 @@ import { ac, dry, wet, mtof } from './context.js';
 import { SOUNDS } from './sounds.js';
 
 const MAX_VOICES = 24;
-let scheduled = [];   /* handed to the audio clock, not yet finished */
+let scheduled = [];   /* notes handed to the audio clock, not yet finished */
+let clicks = [];      /* and the metronome, kept apart so it never eats polyphony */
 
 function cutShort(entry, at) {
   const t = Math.max(at, ac.currentTime);
@@ -20,7 +21,12 @@ function cutShort(entry, at) {
   entry.end = t + .08;
 }
 
-/** Stop means stop: anything already queued is cut short. */
+/**
+ * Stop means stop: anything already queued is cut short, the metronome
+ * included. A whole pass is scheduled ahead, so without this a stop leaves a
+ * loop's worth of clicks running and a tempo change lays a second metronome
+ * over the first.
+ */
 export function killScheduled() {
   if (!ac) return;
   const t = ac.currentTime;
@@ -33,9 +39,19 @@ export function killScheduled() {
     } catch (e) {}
   });
   scheduled = [];
+  clicks.forEach(c => {
+    try {
+      c.gain.gain.cancelScheduledValues(t);
+      c.gain.gain.setValueAtTime(Math.max(c.gain.gain.value, .0001), t);
+      c.gain.gain.exponentialRampToValueAtTime(.0001, t + .01);
+      c.osc.stop(t + .02);   /* earlier than its start, so a pending one never sounds */
+    } catch (e) {}
+  });
+  clicks = [];
 }
 
 export function scheduledCount() { return scheduled.length; }
+export function clickCount() { return clicks.length; }
 
 export function scheduleNote(midi, soundId, when, duration) {
   if (!ac) return;
@@ -108,6 +124,8 @@ export function scheduleNote(midi, soundId, when, duration) {
 /** A cue under the music, not an instrument in it. */
 export function scheduleClick(when, accent) {
   if (!ac) return;
+  const now = ac.currentTime;
+  clicks = clicks.filter(c => c.end > now);
   const o = ac.createOscillator(), g = ac.createGain();
   o.type = 'sine';
   o.frequency.value = accent ? 1320 : 880;
@@ -116,4 +134,5 @@ export function scheduleClick(when, accent) {
   g.gain.exponentialRampToValueAtTime(.0001, when + .045);
   o.connect(g); g.connect(dry);
   o.start(when); o.stop(when + .07);
+  clicks.push({ osc: o, gain: g, end: when + .07 });
 }

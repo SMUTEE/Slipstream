@@ -45,10 +45,19 @@ export function stopTransport() {
   fire('onTransport');
 }
 
-/** Tempo and bar changes restart the current bar rather than drifting. */
+/**
+ * Tempo and bar changes restart the current bar rather than drifting. The pass
+ * already handed to the audio clock has to go with it, or the old tempo keeps
+ * playing underneath the new one.
+ */
 export function resync() {
   if (!LP.running || !ac) return;
-  LP.origin = ac.currentTime;
+  /* Event times are beats measured from origin, and this moves origin. A take
+     spanning the change would have its earlier chords on one grid and its later
+     ones on another, so the take ends here instead. What was played is kept. */
+  if (LP.rec) toggleRecord();
+  killScheduled();
+  LP.origin = ac.currentTime + .05;
   LP.pass = 0;
 }
 

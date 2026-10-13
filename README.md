@@ -182,8 +182,14 @@ five-voice glide pool so slide keeps working; recorded layers use one-shot voice
 against `AudioContext.currentTime`. That scheduler is also what the 12-pulse rhythm engine will
 eventually run on.
 
-Stop is immediate. A whole pass is handed to the audio clock in advance, so stopping cuts the
-queued notes short rather than letting them ring out.
+Stop is immediate, metronome included. A whole pass is handed to the audio clock in advance, so
+stopping cuts everything queued short rather than letting it ring out. Changing the tempo or the
+bar count does the same before rescheduling, or the old tempo would keep playing underneath the
+new one.
+
+Changing either while a take is running ends that take, keeping what you played. Event times are
+beats measured from the loop origin and those changes move the origin, so a take spanning one
+would have its earlier chords on a different grid from its later ones.
 
 Voices are capped by how many actually **overlap**, not by how many are queued ahead — counting
 the queue meant a few layers could exceed the ceiling the moment a pass was scheduled and fall
