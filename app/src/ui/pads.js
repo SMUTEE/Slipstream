@@ -24,7 +24,7 @@ export function createPads({ onPlay, onDetent, onRelease, currentDetent }) {
   root.addEventListener('pointerdown', e => {
     const pad = e.target.closest('.pad');
     if (!pad) return;
-    gesture = { x: e.clientX, y: e.clientY };
+    gesture = { x: e.clientX, y: e.clientY, armed: false };
     showRing(e.clientX, e.clientY, currentDetent());
     try { pad.setPointerCapture(e.pointerId); } catch (err) {}
     onPlay(+pad.dataset.d);
@@ -33,6 +33,13 @@ export function createPads({ onPlay, onDetent, onRelease, currentDetent }) {
   root.addEventListener('pointermove', e => {
     if (!gesture) return;
     const zone = zoneFor(e.clientX - gesture.x, e.clientY - gesture.y);
+    /* A press is not a gesture until it has actually travelled. Without this a
+       few pixels of hand tremor read as "inside the dead zone" and reset the
+       knob to the triad, silently discarding an angle set beforehand. Once the
+       pointer has left the dead zone once, returning to the middle means the
+       triad on purpose. */
+    if (zone >= 0) gesture.armed = true;
+    if (!gesture.armed) return;
     highlight(zone);
     onDetent(zone < 0 ? 0 : COMPASS[zone]);
   });

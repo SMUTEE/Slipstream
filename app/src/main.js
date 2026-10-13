@@ -14,7 +14,7 @@ import { initPool, applyChord, releaseAll, markAllOff } from './audio/pool.js';
 
 import {
   initRecorder, startTransport, stopTransport, resync, toggleRecord,
-  noteOn, noteOff, noteTouch, clearLoop, removeLayer, loadPreset,
+  noteOn, noteOff, noteTouch, noteLift, clearLoop, removeLayer, loadPreset,
   loopPos, takeLeft, takeProgress
 } from './loop/recorder.js';
 
@@ -86,7 +86,7 @@ function silence() {
  * the same pad again, leaving hold, or the take ending.
  */
 function release() {
-  if (S.hold) return;
+  if (S.hold) { noteLift(); return; }
   silence();
 }
 

@@ -128,12 +128,28 @@ export function noteOn(degree) {
     t = Math.round(t * 2) / 2;
     if (t >= loopBeats()) t -= loopBeats();
   }
-  LP.held = { t, deg: degree, det: S.detent, start: ac.currentTime };
+  LP.held = { t, deg: degree, det: S.detent, start: ac.currentTime, live: true };
   LP.current.sound = S.sound;
 }
 
-/** The knob can move while a chord is held, so the detent is read at release. */
-export function noteTouch() { if (LP.held) LP.held.det = S.detent; }
+/** The pointer has left the pad. Under hold the chord carries on sounding. */
+export function noteLift() { if (LP.held) LP.held.live = false; }
+
+/**
+ * The knob moved. While the pad is still under a finger that is one gesture
+ * settling, so the open event just takes the new detent. Once the finger has
+ * gone and hold is keeping the chord alive, the same move audibly changes the
+ * chord, so it closes the event and opens another at the same degree: what you
+ * hear is what gets recorded.
+ */
+export function noteTouch() {
+  if (!LP.held || !ac) return;
+  if (LP.held.live) { LP.held.det = S.detent; return; }
+  if (LP.held.det === S.detent) return;
+  const degree = LP.held.deg;
+  noteOff();
+  noteOn(degree);
+}
 
 export function noteOff() {
   if (!LP.held || !LP.current || !ac) return;
