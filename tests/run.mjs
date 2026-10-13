@@ -94,7 +94,7 @@ for (let i = 0; i < 3000; i++) {
   for (let l = 0; l < 1 + rnd(4); l++) {
     const ev = [];
     for (let e = 0; e < rnd(33); e++) ev.push({
-      deg: rnd(7), det: rnd(12),
+      deg: rnd(7), det: rnd(12), glide: rnd(2) === 1,
       t: Math.round(Math.random() * 31000) / 1000,
       dur: Math.round(Math.random() * 1200) / 100
     });
@@ -113,6 +113,7 @@ for (let i = 0; i < 3000; i++) {
       const o = st.layers[li];
       return L.sound === o.sound && L.muted === o.muted && L.events.length === o.events.length
         && L.events.every((e, ei) => e.deg === o.events[ei].deg && e.det === o.events[ei].det
+          && e.glide === o.events[ei].glide
           && Math.abs(e.t - o.events[ei].t) < 0.002
           && Math.abs(e.dur - o.events[ei].dur) < 0.011);
     });
@@ -128,14 +129,34 @@ ok('malformed input is refused rather than half-loaded',
   junk.every(j => unpackLoop(j) === null),
   junk.filter(j => unpackLoop(j) !== null).map(j => JSON.stringify(j)).join(' '));
 
-ok('a fresh token declares version 3', packLoop({
+ok('a fresh token declares version 4', packLoop({
   key: 0, scale: 0, bpm: 96, bars: 4, q: false, inv: 0, oct: 0, rev: 0, dly: 0, layers: []
-})[0] === '3');
+})[0] === '4');
+
+/* The slide flag rides inside the detent character, so a chord is still seven. */
+const slid = packLoop({
+  key: 0, scale: 0, bpm: 96, bars: 4, q: false, inv: 0, oct: 0, rev: 0, dly: 0,
+  layers: [{ sound: 0, muted: false, events: [
+    { deg: 0, det: 3, t: 0, dur: 2, glide: true },
+    { deg: 4, det: 3, t: 4, dur: 2, glide: false }
+  ] }]
+});
+const slidBack = unpackLoop(slid);
+ok('a chord is still seven characters with the slide flag inside it',
+  slid.split('-')[1].length === 2 + 7 * 2, String(slid.split('-')[1].length));
+ok('the slide flag survives a round trip',
+  slidBack.layers[0].events.map(e => e.glide).join(',') === 'true,false');
+ok('and the detent is unharmed by sharing its character',
+  slidBack.layers[0].events.every(e => e.det === 3));
+ok('a detent character out of range is refused',
+  unpackLoop('4002o40012gc-00z00006o4') === null);
 
 /* An old token: I V vi IV at 0, 2.5, 5 and 7.5 SECONDS in a 10-second loop at
    96 bpm. In beats that is one chord per bar: 0, 4, 8, 12. */
 const v1 = unpackLoop('1002o40-00000006o401xg6o503uw6o335sc6o');
 ok('tokens shared before voicing existed still load', !!v1 && v1.layers[0].events.length === 4);
+ok('tokens from before playback could slide do not suddenly slide',
+  !!v1 && v1.layers[0].events.every(e => e.glide === false));
 ok('and they default to root position at the original octave',
   !!v1 && v1.inv === 0 && v1.oct === 0);
 ok('and their seconds are converted to beats on the way in',

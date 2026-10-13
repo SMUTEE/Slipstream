@@ -82,16 +82,39 @@ function schedulePass(t0) {
   }
   for (const ly of LP.layers) {
     if (ly.muted || (ly === LP.current && LP.rec)) continue;
-    for (const ev of ly.events) {
-      if (ev.t >= loopBeats()) continue;       /* trimmed by a shorter bar count */
+    const evs = ly.events.filter(e => e.t < loopBeats());   /* trimmed by a shorter bar count */
+    evs.forEach((ev, i) => {
       const w = t0 + ev.t * bl;
-      if (w < ac.currentTime - .02) continue;
+      if (w < ac.currentTime - .02) return;
       const chord = buildChord(S.key, S.scale, ev.deg, DETENTS[ev.det].id);
-      for (const m of voiced(chord, S.inv, S.oct)) scheduleNote(m, ly.sound, w, ev.dur * bl);
+      const notes = voiced(chord, S.inv, S.oct);
+
+      /* Slide in from the chord before it. The first chord of a pass slides
+         from the last one, so a loop joins to itself rather than jumping. */
+      let from = null, glide = 0;
+      if (ev.glide && evs.length > 1) {
+        const prev = evs[i > 0 ? i - 1 : evs.length - 1];
+        from = voiced(buildChord(S.key, S.scale, prev.deg, DETENTS[prev.det].id), S.inv, S.oct);
+        glide = Math.min(S.glide / 1000, ev.dur * bl * .9);
+      }
+      notes.forEach((m, k) => scheduleNote(m, ly.sound, w, ev.dur * bl, slideFrom(from, m, k), glide));
+
       const delay = Math.max(0, (w - ac.currentTime) * 1000);
       setTimeout(() => { if (hooks.onFire) hooks.onFire(ly); }, delay);
-    }
+    });
   }
+}
+
+/** Pair by position where the chords are the same size, by pitch where they are not. */
+function slideFrom(from, target, index) {
+  if (!from || !from.length) return null;
+  if (from[index] !== undefined) return from[index];
+  let best = from[0], gap = Math.abs(best - target);
+  for (const n of from) {
+    const d = Math.abs(n - target);
+    if (d < gap) { gap = d; best = n; }
+  }
+  return best;
 }
 
 export function toggleRecord() {
@@ -128,7 +151,7 @@ export function noteOn(degree) {
     t = Math.round(t * 2) / 2;
     if (t >= loopBeats()) t -= loopBeats();
   }
-  LP.held = { t, deg: degree, det: S.detent, start: ac.currentTime, live: true };
+  LP.held = { t, deg: degree, det: S.detent, start: ac.currentTime, live: true, glide: S.slide };
   LP.current.sound = S.sound;
 }
 
@@ -156,7 +179,7 @@ export function noteOff() {
   const h = LP.held;
   LP.held = null;
   const dur = Math.max(.12, Math.min((ac.currentTime - h.start) / beatLen(), loopBeats() * .98));
-  LP.current.events.push({ t: h.t, deg: h.deg, det: h.det, dur });
+  LP.current.events.push({ t: h.t, deg: h.deg, det: h.det, dur, glide: h.glide });
   LP.current.events.sort((a, b) => a.t - b.t);
   fire('onLayers');
   fire('onSaved');
@@ -198,7 +221,8 @@ export function loadPreset(index) {
       deg: c[0],
       det: DETENTS.findIndex(d => d.id === c[1]),
       t: i * step,
-      dur: step * .96
+      dur: step * .96,
+      glide: S.slide
     }))
   };
   if (LP.layers.length >= MAX_LAYERS) LP.layers.pop();

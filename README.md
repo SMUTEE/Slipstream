@@ -181,6 +181,15 @@ unrelated things look like one.
 
 ### Under it
 
+Recorded layers slide too. A chord whose slide flag is set starts on the pitches of the chord
+before it and ramps to its own over the glide time, while still re-attacking the envelope:
+gliding the pitch and keeping the attack is what separates a slide from legato mush. The first
+chord of a pass slides from the last, so a loop joins to itself. Notes are paired by position
+where two chords are the same size and by nearest pitch where they are not.
+
+The flag is captured from Slide at the moment you play the chord, and the glide time stays
+live, so dialling Glide afterwards re-shapes an arrangement that is already recorded.
+
 Playback and the live instrument use separate audio paths. Live playing runs through the
 five-voice glide pool so slide keeps working; recorded layers use one-shot voices scheduled
 against `AudioContext.currentTime`. That scheduler is also what the 12-pulse rhythm engine will

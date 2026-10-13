@@ -26,15 +26,19 @@ function dec(s) {
 }
 
 /* Header, 11 chars: version, key, scale, tempo(2), bars, quantize, voicing,
-   octave, reverb, delay. Then one chunk per layer. */
+   octave, reverb, delay. Then one chunk per layer.
+
+   A chord is seven characters. The slide flag rides in the detent character as
+   det + 12, since a detent is 0 to 11 and the character holds 0 to 35, so the
+   token does not grow. */
 export function packLoop(st) {
-  let t = '3' + enc(st.key, 1) + enc(st.scale, 1) + enc(st.bpm, 2) + enc(st.bars, 1)
+  let t = '4' + enc(st.key, 1) + enc(st.scale, 1) + enc(st.bpm, 2) + enc(st.bars, 1)
         + (st.q ? '1' : '0') + enc(st.inv, 1) + enc(st.oct + 1, 1)
         + enc(Math.round(st.rev * 35), 1) + enc(Math.round(st.dly * 35), 1);
   for (const ly of st.layers) {
     t += '-' + enc(ly.sound, 1) + (ly.muted ? '1' : '0');
     for (const ev of ly.events) {
-      t += enc(ev.deg, 1) + enc(ev.det, 1)
+      t += enc(ev.deg, 1) + enc(ev.det + (ev.glide ? 12 : 0), 1)
          + enc(Math.min(46655, ev.t * 1000), 3)
          + enc(Math.min(1295, ev.dur * 100), 2);
     }
@@ -49,7 +53,7 @@ export function unpackLoop(token) {
   const parts = token.split('-');
   const h = parts[0];
   const ver = h ? h[0] : '';
-  if (!h || !['1', '2', '3'].includes(ver)) return null;
+  if (!h || !['1', '2', '3', '4'].includes(ver)) return null;
   if (ver === '1' ? h.length !== 7 : h.length !== 11) return null;
 
   const key = dec(h[1]), scale = dec(h[2]), bpm = dec(h.slice(3, 5)), bars = dec(h[5]);
@@ -70,14 +74,20 @@ export function unpackLoop(token) {
     if (Number.isNaN(sound) || sound >= SOUND_IDS.length) return null;
     const events = [];
     for (let j = 2; j < c.length; j += 7) {
-      const deg = dec(c[j]), det = dec(c[j + 1]);
+      const deg = dec(c[j]), packed = dec(c[j + 1]);
       const t = dec(c.slice(j + 2, j + 5)) / 1000;
       const dur = dec(c.slice(j + 5, j + 7)) / 100;
-      if ([deg, det, t, dur].some(Number.isNaN) || deg > 6 || det > 11) return null;
-      events.push({ deg, det, t, dur });
+      if ([deg, packed, t, dur].some(Number.isNaN) || deg > 6) return null;
+      /* Before v4 nothing slid on playback, so an old arrangement stays as it sounded. */
+      const glide = ver === '4' && packed >= 12;
+      const det = ver === '4' ? packed % 12 : packed;
+      if (packed > (ver === '4' ? 23 : 11)) return null;
+      events.push({ deg, det, t, dur, glide });
     }
-    /* v1 and v2 stored seconds; convert with the tempo they carry */
-    if (ver !== '3') {
+    /* v1 and v2 stored seconds; convert with the tempo they carry. Name those
+       two rather than excluding the current version, or the next bump silently
+       converts tokens that were already in beats. */
+    if (ver === '1' || ver === '2') {
       const perBeat = bpm / 60;
       events.forEach(e => { e.t *= perBeat; e.dur *= perBeat; });
     }

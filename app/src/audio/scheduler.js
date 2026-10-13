@@ -53,10 +53,25 @@ export function killScheduled() {
 export function scheduledCount() { return scheduled.length; }
 export function clickCount() { return clicks.length; }
 
-export function scheduleNote(midi, soundId, when, duration) {
+/**
+ * @param from  midi note to slide in from, or null to start on pitch
+ * @param glide seconds to reach the target pitch
+ *
+ * The envelope always re-attacks. Gliding the pitch while keeping the attack is
+ * what separates a slide from legato mush: you hear the move and still hear
+ * where the chord lands.
+ */
+export function scheduleNote(midi, soundId, when, duration, from = null, glide = 0) {
   if (!ac) return;
   const T = SOUNDS[soundId];
   const f = mtof(midi + T.oct);
+  const sliding = from !== null && from !== midi && glide > 0;
+  const f0 = sliding ? mtof(from + T.oct) : f;
+  const ramp = (param, mult) => {
+    if (!sliding) { param.value = f * mult; return; }
+    param.setValueAtTime(f0 * mult, when);
+    param.exponentialRampToValueAtTime(f * mult, when + glide);
+  };
   const off = when + Math.max(duration, .1);
   const end = off + T.r + .15;
   const now = ac.currentTime;
@@ -85,9 +100,9 @@ export function scheduleNote(midi, soundId, when, duration) {
   const amp = ac.createGain(), send = ac.createGain();
 
   o1.type = T.t[0]; o2.type = T.t[1]; o3.type = T.t[2];
-  o1.frequency.value = f * T.p[0][0];
-  o2.frequency.value = f * T.p[1][0];
-  o3.frequency.value = f * T.p[2][0];
+  ramp(o1.frequency, T.p[0][0]);
+  ramp(o2.frequency, T.p[1][0]);
+  ramp(o3.frequency, T.p[2][0]);
   o1.detune.value = T.det[0]; o2.detune.value = T.det[1]; o3.detune.value = T.det[2];
   g1.gain.value = T.p[0][1]; g2.gain.value = T.p[1][1]; g3.gain.value = T.p[2][1];
   send.gain.value = T.wet;
@@ -100,7 +115,7 @@ export function scheduleNote(midi, soundId, when, duration) {
   if (T.fm) {
     mo = ac.createOscillator();
     const mg = ac.createGain();
-    mo.frequency.value = f * T.fm.ratio;
+    ramp(mo.frequency, T.fm.ratio);
     mg.gain.setValueAtTime(f * T.fm.idx, when);
     mg.gain.linearRampToValueAtTime(f * T.fm.idx * .12, when + T.fm.dec);
     mo.connect(mg); mg.connect(o1.frequency); mo.start(when);
