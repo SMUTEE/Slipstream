@@ -78,7 +78,8 @@ gesture starts on a pad and you never actually touch the knob here, so it is a r
 than a control. Pads grow and the transport pins to the bottom of the screen, which means you
 can start a take without scrolling away from the thing you are playing.
 
-**The transform ring is drawn at the point of contact.** Press a pad and slide, and the eight
+**The transform ring is drawn at the point of contact.** A press only becomes a gesture once it has travelled past the dead zone, so hand tremor while
+pressing cannot discard an angle you set beforehand. Press a pad and slide, and the eight
 compass positions appear around your finger or cursor with the current one lit, so you can see
 where you already are before moving.
 
