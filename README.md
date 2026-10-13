@@ -51,7 +51,10 @@ transport is its own card, with record and play as the only full-size controls i
 | `↑ → ↓ ←` | The four cardinals; hold two at once for a diagonal |
 | `Space` | Latch the chord so you can change key and hear it slide |
 
-**Hold** latches a chord so your hands are free. Because there is no release to end it, pressing
+**Hold** latches a chord so your hands are free. Recording under hold captures the chord for
+as long as it actually rings, not for the moment your finger was on the pad: the event closes
+when the chord stops, whether that is another pad, the same pad again, leaving hold, or the take
+ending. Because there is no release to end it, pressing
 the same pad again stops it, and a different pad replaces it. Switching Hold back off releases
 whatever it was sustaining.
 | `G` | Toggle slide |

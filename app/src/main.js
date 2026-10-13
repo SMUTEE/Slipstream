@@ -70,6 +70,9 @@ function play(degree) {
 }
 
 function silence() {
+  /* The chord stops here, so a recorded event ends here. Under hold that is
+     long after the finger left the pad. */
+  noteOff();
   releaseAll(S.sound);
   S.degree = null;
   renderPads(romans(), null);
@@ -77,9 +80,12 @@ function silence() {
   paintKnob();
 }
 
-/** Releasing the pad ends the recorded event even when Hold keeps it sounding. */
+/**
+ * Under hold the chord carries on after the pointer lifts, so nothing is
+ * committed here. The event closes when the chord actually stops: another pad,
+ * the same pad again, leaving hold, or the take ending.
+ */
 function release() {
-  noteOff();
   if (S.hold) return;
   silence();
 }
